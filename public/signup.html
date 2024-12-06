@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register for Appointment</title>
+</head>
+<body>
+    
+    <form id="register-form">
+        <label for="name">Enter your name:</label>
+        <input type="text" id="name" placeholder="Name" required>
+        <label for="email">Enter your email:</label>
+        <input type="email" id="email" placeholder="Email" required>
+        <label for="password">Enter your password:</label>
+        <input type="password" id="password" placeholder="Password" required>
+        
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+        
+            // Collect form data
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+        
+            // Input validation
+            if (!name) {
+                alert("Please enter a user name.");
+                return;
+            }
+            if (!email) {
+                alert("Please enter an email address.");
+                return;
+            }
+            if (!password) {
+                alert("Please enter a password.");
+                return;
+            }
+        
+            const userData = { name, email, password };
+            
+            console.log(userData)
+           
+            // Make the POST request to the backend
+            fetch('http://localhost:3000/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            })
+            .then(response => response.json())  // Parse JSON response here
+            .then(data => {
+                console.log(data)
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                }
+              
+            })
+            .catch(error => {
+                alert(error.message);
+                console.error('Error registering user:', error);
+            });
+        });
+        
+    </script>
+</body>
+</html>
