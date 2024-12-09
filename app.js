@@ -4,8 +4,10 @@ const express = require('express')
 const sequelize = require('./util/database')
 const authRoutes = require('./routes/auth')
 const expenseRoutes = require('./routes/expense');
+const purchaseRoutes = require('./routes/purchase');
 const User=require('./models/user')
 const Expense=require('./models/expense')
+const Order=require('./models/orders')
 const path = require('path')
 
 const app = express()
@@ -17,6 +19,7 @@ app.use(express.json());
 
 app.use(authRoutes)
 app.use(expenseRoutes);
+app.use('/purchase',purchaseRoutes);
 
 app.get('/signup', (req, res) => {
  
@@ -28,8 +31,11 @@ app.get('/login', (req, res) => {
 
 User.hasMany(Expense)
 Expense.belongsTo(User)
+
+User.hasMany(Order);
+Order.belongsTo(User);
 sequelize
-  .sync()
+  .sync({ alter: true })
   .then((result) => {
     console.log('Database connected.');
     app.listen(3000, () => {

@@ -1,3 +1,5 @@
+// const Razorpay = require("razorpay");
+
  // Replace with your API URL
  function handleFormSubmit(event) {
   event.preventDefault();
@@ -115,3 +117,64 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+document.getElementById('rzp-button').onclick=async function(e){
+  const token=localStorage.getItem('token')
+  const response=await axios.get('http://localhost:3000/purchase/premiummembership',{headers:{"Authorization":token}});
+  console.log(response);
+  const options = {
+    key: response.data.key_id, // Razorpay API Key
+    order_id: response.data.order.id, // Order ID from Razorpay
+    handler: async function (response) {
+      try {
+        // Send transaction success details to the backend
+        await axios.post(
+          'http://localhost:3000/purchase/updatetransactionstatus',
+          {
+            order_id: options.order_id,
+            payment_id: response.razorpay_payment_id,
+            status: "SUCCESS",
+          },
+          {
+            headers: { Authorization: token },
+          }
+        );
+        alert("You are a premium user now!");
+      } catch (error) {
+        console.error("Error updating transaction to SUCCESS:", error);
+        alert("Failed to update the transaction. Please contact support.");
+      }
+    },
+  };
+
+  const rzp1 = new Razorpay(options);
+
+  // Add payment failure handler
+  rzp1.on("payment.failed", async function (response) {
+    try {
+      // Notify backend of failed transaction
+      await axios.post(
+        "http://localhost:3000/purchase/updatetransactionstatus",
+        {
+          order_id: options.order_id,
+          status: "FAILED",
+        },
+        {
+          headers: { Authorization: token },
+        }
+      );
+      alert("Payment failed. Order status updated to FAILED.");
+    } catch (error) {
+      console.error("Error updating transaction to FAILED:", error);
+      alert("Failed to update the transaction status.");
+    }
+  });
+
+ 
+ 
+  rzp1.open();
+  e.preventDefault();
+  rzp1.on('payment failed',function(reset){
+    console.log(response);
+    alert('something went wrong');
+  })
+}
