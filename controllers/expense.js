@@ -2,24 +2,42 @@ const { Sequelize } = require('sequelize');
 const Expense = require('../models/expense');
 const User = require('../models/user');
 // Add a new expense
+
+
+
 exports.addExpense = async (req, res) => {
+  const { amount, description, category } = req.body;
+  const userId = req.user.id;
+
   try {
-    console.log("message")
-    const { amount, description, category } = req.body;
-    
-    console.log(req.body)
+    console.log("message");
+    console.log(req.body);
+
     if (!amount || !description || !category) {
       return res.status(400).json({ error: "All fields are required." });
     }
-    console.log(req.user.id)
-    const newExpense = await Expense.create({ amount, description, category ,userId: req.user.id });
-    
+    console.log(req.user.id);
+
+    // Create the new expense
+    const newExpense = await Expense.create({
+      amount,
+      description,
+      category,
+      userId
+    });
+
+    // Update the user's total expense
+    const user = await User.findByPk(userId);
+    user.totalexpense += parseFloat(amount); // Ensure amount is a float
+    await user.save();
+
     res.status(201).json(newExpense);
   } catch (error) {
-    console.error("Error adding expense:", error.message);
-    res.status(500).json({ error: "An error occurred while adding the expense." });
+    console.error('Error adding expense:', error.message);
+    res.status(500).json({ message: 'Error adding expense' });
   }
 };
+
 // Get all expenses
 exports.getExpenses = async (req, res) => {
     try {

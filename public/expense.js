@@ -157,45 +157,7 @@ function displayLeaderboard(data) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem('token');
 
-  if (!token) {
-    alert("You must be logged in to view expenses");
-    window.location.href = "login.html";
-    return;
-  }
-
-  const decodeToken = parseJwt(token);
-  console.log(decodeToken);
-
-  const isAdmin = decodeToken.ispremiumuser;
-  const isPremium = localStorage.getItem('isPremium') === 'true';
-
-  if (isPremium || isAdmin) {
-    showPremiumuserMessage();
-  }
-
-  fetch("http://localhost:3000/expenses/all", {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch expenses');
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log(data.expenses);
-      data.expenses.forEach(expense => displayExpense(expense));
-    })
-    .catch((error) => {
-      console.error('Error loading expenses:', error);
-    });
-});
 
 function parseJwt(token) {
   var base64Url = token.split('.')[1];
