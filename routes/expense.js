@@ -6,4 +6,12 @@ router.post('/expenses', Authorize,expenseController.addExpense);
 router.get('/expenses/all', Authorize,expenseController.getAllExpenses);
 router.get('/expenses', Authorize,expenseController.getExpenses);
 router.delete('/expenses/:expenseid',Authorize, expenseController.deleteExpense);
+router.get('/premium/showLeaderboard', Authorize, expenseController.showLeaderboard);
 module.exports = router;
+
+
+
+
+
+
+

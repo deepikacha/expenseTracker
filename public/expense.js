@@ -1,7 +1,7 @@
 // const Razorpay = require("razorpay");
 
- // Replace with your API URL
- function handleFormSubmit(event) {
+// Replace with your API URL
+function handleFormSubmit(event) {
   event.preventDefault();
   const amount = event.target.amount.value;
   const description = event.target.description.value;
@@ -27,50 +27,46 @@
   };
 
   // Send POST request to add expense to backend
-  
-  
-  fetch("http://localhost:3000/expenses",
-    {headers:{  "Content-Type": "application/json",Authorization:token},
-    method:"POST", 
-    body: JSON.stringify(expense),})
- 
-  .then((response) => response.json())
-  .then((savedExpense) => {
-    // Display saved expense in the list
-    displayExpense(savedExpense);
-    // Reset form
-    event.target.reset();
+  fetch("http://localhost:3000/expenses", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token
+    },
+    method: "POST",
+    body: JSON.stringify(expense),
   })
-  .catch((error) => {
-    console.error("Error saving expense:", error);
-  });
+    .then((response) => response.json())
+    .then((savedExpense) => {
+      // Display saved expense in the list
+      displayExpense(savedExpense);
+      // Reset form
+      event.target.reset();
+    })
+    .catch((error) => {
+      console.error("Error saving expense:", error);
+    });
 }
 
 // Function to display an expense
-
 function displayExpense(expense) {
   const expenseList = document.getElementById("expenseList");
   const li = document.createElement("li");
   li.setAttribute("data-id", expense.id);
   li.textContent = `${expense.amount} - ${expense.description} - ${expense.category}`;
+
   const token = localStorage.getItem('token');
-    // Ensure expense.id exists
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", () => {
-      fetch(`http://localhost:3000/expenses/${expense.id}`, {
-        method: "DELETE", 
-        headers:{Authorization:token}
-      })
+  // Ensure expense.id exists
+  const deleteButton = document.createElement("button");
+  deleteButton.textContent = "Delete";
+  deleteButton.addEventListener("click", () => {
+    fetch(`http://localhost:3000/expenses/${expense.id}`, {
+      method: "DELETE",
+      headers: { Authorization: token }
+    })
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // If the expense belongs to the logged-in user, delete the expense from the list
-          if (data.success) {
-            li.remove(); // Remove the expense from the list
-          } else {
-            alert(data.message || "Failed to delete expense");
-          }
+          li.remove(); // Remove the expense from the list
         } else {
           alert(data.message || "Failed to delete expense");
         }
@@ -78,14 +74,138 @@ function displayExpense(expense) {
       .catch((error) => {
         console.error("Error deleting expense:", error);
       });
-    });
+  });
 
-    li.appendChild(deleteButton);
-    expenseList.appendChild(li);
+  li.appendChild(deleteButton);
+  expenseList.appendChild(li);
+}
+
+function showPremiumuserMessage() {
+  // Find the add expense button or the parent container where you want to insert the new elements
+  const addExpenseButton = document.querySelector('button[type="submit"]');
+  const container = addExpenseButton.parentNode;
+
+  // Check if elements already exist to prevent duplication
+  if (!document.getElementById("premium-message")) {
+    // Display premium user message
+    const premiumMessage = document.createElement("span");
+    premiumMessage.id = "premium-message";
+    premiumMessage.textContent = "You are a premium user now";
+    container.appendChild(premiumMessage);
   }
 
- 
+  if (!document.getElementById("show-leaderboard")) {
+    // Add "Show Leaderboard" button
+    const showLeaderboardButton = document.createElement("button");
+    showLeaderboardButton.textContent = "Show Leaderboard";
+    showLeaderboardButton.id = "show-leaderboard";
+    container.appendChild(showLeaderboardButton);
 
+    // Add event listener for the "Show Leaderboard" button
+    showLeaderboardButton.addEventListener("click", fetchLeaderboard);
+  }
+}
+
+// Existing functions...
+function fetchLeaderboard() {
+  const token = localStorage.getItem('token');
+
+  fetch("http://localhost:3000/premium/showLeaderboard", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token
+    },
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) {
+        throw new TypeError('Data is not an array');
+      }
+      displayLeaderboard(data);
+    })
+    .catch(error => {
+      console.error("Error fetching leaderboard:", error);
+    });
+}
+
+function displayLeaderboard(data) {
+  // Clear existing leaderboard if any
+  let leaderboardContainer = document.getElementById("leaderboard-container");
+  if (!leaderboardContainer) {
+    leaderboardContainer = document.createElement("div");
+    leaderboardContainer.id = "leaderboard-container";
+    document.body.appendChild(leaderboardContainer);
+  }
+  leaderboardContainer.innerHTML = '';
+
+  const leaderboardTitle = document.createElement("h3");
+  leaderboardTitle.textContent = "Leaderboard";
+  leaderboardContainer.appendChild(leaderboardTitle);
+
+  const leaderboardList = document.createElement("ul");
+  leaderboardContainer.appendChild(leaderboardList);
+
+  data.forEach(user => {
+    const listItem = document.createElement("li");
+    listItem.textContent = `Name: ${user.name}, Total Expense: ${user.totalexpense}`;
+    leaderboardList.appendChild(listItem);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    alert("You must be logged in to view expenses");
+    window.location.href = "login.html";
+    return;
+  }
+
+  const decodeToken = parseJwt(token);
+  console.log(decodeToken);
+
+  const isAdmin = decodeToken.ispremiumuser;
+  const isPremium = localStorage.getItem('isPremium') === 'true';
+
+  if (isPremium || isAdmin) {
+    showPremiumuserMessage();
+  }
+
+  fetch("http://localhost:3000/expenses/all", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch expenses');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data.expenses);
+      data.expenses.forEach(expense => displayExpense(expense));
+    })
+    .catch((error) => {
+      console.error('Error loading expenses:', error);
+    });
+});
+
+function parseJwt(token) {
+  var base64Url = token.split('.')[1];
+  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+
+  return JSON.parse(jsonPayload);
+}
 
 // Load expenses from the backend on page load
 document.addEventListener("DOMContentLoaded", () => {
@@ -97,29 +217,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  fetch("http://localhost:3000/expenses/all", {
+  const decodeToken = parseJwt(token);
+  console.log(decodeToken);
 
-    headers: {"Content-Type": "application/json",
-       Authorization: token },
+  const isAdmin = decodeToken.ispremiumuser;
+  const isPremium = localStorage.getItem('isPremium') === 'true';
+
+  if (isPremium || isAdmin) {
+    showPremiumuserMessage();
+  }
+
+  fetch("http://localhost:3000/expenses/all", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token
+    },
   })
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error('Failed to fetch expenses');
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log(data.expenses); // Handle your expenses
-    data.expenses.forEach(expense => displayExpense(expense));
-})
-  .catch((error) => {
-    console.error('Error loading expenses:', error);
-  });
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch expenses');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data.expenses); // Handle your expenses
+      data.expenses.forEach(expense => displayExpense(expense));
+    })
+    .catch((error) => {
+      console.error('Error loading expenses:', error);
+    });
 });
 
-document.getElementById('rzp-button').onclick=async function(e){
-  const token=localStorage.getItem('token')
-  const response=await axios.get('http://localhost:3000/purchase/premiummembership',{headers:{"Authorization":token}});
+document.getElementById('rzp-button').onclick = async function (e) {
+  const token = localStorage.getItem('token');
+
+  const response = await axios.get('http://localhost:3000/purchase/premiummembership', {
+    headers: { Authorization: token }
+  });
   console.log(response);
   const options = {
     key: response.data.key_id, // Razorpay API Key
@@ -138,7 +272,11 @@ document.getElementById('rzp-button').onclick=async function(e){
             headers: { Authorization: token },
           }
         );
+
         alert("You are a premium user now!");
+        localStorage.setItem("isPremium", true);
+        showPremiumuserMessage();
+
       } catch (error) {
         console.error("Error updating transaction to SUCCESS:", error);
         alert("Failed to update the transaction. Please contact support.");
@@ -146,35 +284,27 @@ document.getElementById('rzp-button').onclick=async function(e){
     },
   };
 
-  const rzp1 = new Razorpay(options);
-
+  const rzp1 = new Razorpay(options)
   // Add payment failure handler
   rzp1.on("payment.failed", async function (response) {
     try {
-      // Notify backend of failed transaction
-      await axios.post(
-        "http://localhost:3000/purchase/updatetransactionstatus",
-        {
-          order_id: options.order_id,
-          status: "FAILED",
-        },
-        {
-          headers: { Authorization: token },
-        }
-      );
+      if (!options.order_id) {
+        console.error("Order ID missing in Razorpay options");
+        return;
+      } // Notify backend of failed transaction 
+      await axios.post("http://localhost:3000/purchase/updatetransactionstatus",
+        { order_id: options.order_id, status: "FAILED", },
+        { headers: { Authorization: token }, });
       alert("Payment failed. Order status updated to FAILED.");
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Error updating transaction to FAILED:", error);
       alert("Failed to update the transaction status.");
     }
   });
-
- 
- 
   rzp1.open();
   e.preventDefault();
-  rzp1.on('payment failed',function(reset){
-    console.log(response);
-    alert('something went wrong');
-  })
-}
+  rzp1.on('payment failed', function (reset) {
+    console.log(response); alert('something went wrong');
+  });
+};

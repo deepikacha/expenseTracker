@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        /* Add your styles here (same as previous) */
+        /* Add your styles here */
     </style>
 </head>
 <body>
@@ -48,24 +48,22 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(loginData),
             })
-            .then(response => {
-                // Handle response status before parsing JSON
+            .then(async response => {
                 if (response.status === 200) {
-                    return response.json();  // Parse JSON if the response is OK
+                    return response.json();
                 } else if (response.status === 404) {
                     throw new Error("Email is not correct.");
                 } else if (response.status === 401) {
                     throw new Error("Password is not correct.");
                 } else {
-                    throw new Error("Both Email and password were incorrect.");
+                    throw new Error("An unexpected error occurred.");
                 }
             })
             .then(data => {
-                // Use the parsed data
                 messageContainer.style.color = 'green';
                 messageContainer.textContent = "Login successful!";
-                console.log("Login successful:", data);
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('isPremium', data.isPremiumUser); // Save the premium status
                 window.location.href = "expense.html";
             })
             .catch(error => {
@@ -75,6 +73,13 @@
             });
         });
         
-         </script>
+        
+          
+        
+
+        document.getElementById('signup-btn').addEventListener('click', () => {
+            window.location.href = 'signup.html';
+        });
+    </script>
 </body>
 </html>

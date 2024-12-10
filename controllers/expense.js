@@ -1,5 +1,6 @@
-const { where } = require('sequelize');
+const { Sequelize } = require('sequelize');
 const Expense = require('../models/expense');
+const User = require('../models/user');
 // Add a new expense
 exports.addExpense = async (req, res) => {
   try {
@@ -71,4 +72,39 @@ exports.deleteExpense = async (req, res) => {
   console.log(err);
   return res.status(500).json({success:true,message:"failed"})
   })
+};
+
+
+
+
+
+
+exports.showLeaderboard = async (req, res) => {
+  try {
+    const leaderboard = await User.findAll({
+      attributes: [
+        'name',
+        [Sequelize.fn('SUM', Sequelize.col('expenses.amount')), 'totalexpense']
+      ],
+      include: [
+        {
+          model: Expense,
+          attributes: []
+        }
+      ],
+      group: ['User.id'],
+      order: [[Sequelize.literal('totalexpense'), 'DESC']] // Order by totalexpense in descending order
+    });
+
+    // Ensure the result is in JSON format
+    const leaderboardData = leaderboard.map(user => ({
+      name: user.name,
+      totalexpense: user.dataValues.totalexpense
+    }));
+
+    res.status(200).json(leaderboardData);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Error fetching leaderboard' });
+  }
 };
