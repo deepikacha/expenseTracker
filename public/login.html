@@ -106,6 +106,7 @@
             axios.post('http://localhost:3000/password/forgotpassword', { email })
             .then(response => {
                 alert("Password reset link sent to your email.");
+                document.getElementById('forgot-password-form').style.display = 'none';
             })
             .catch(error => {
                 console.error('Error during password reset:', error);
@@ -114,4 +115,3 @@
         });
     </script>
 </body>
-</html>
