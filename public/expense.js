@@ -126,15 +126,19 @@ function parseJwt(token) {
 
 function download() {
   const token = localStorage.getItem('token');
+ 
+ const filter = document.getElementById('filter').value;
 
-  axios.get(`http://localhost:3000/download`, {
+  axios.get(`http://localhost:3000/download?filter=${filter}`, {
     headers: {"Content-Type": "application/json",
       Authorization: token,
+    
       
     }
   })
     .then((response) => {
-      let expenses= response.expenses;
+      let expenses= response.data.expenses;
+      
       let csvContent=convertToCSV(expenses);
       let blob=new Blob([csvContent],{type:"text/csv"})
       let url=URL.createObjectURL(blob);
@@ -186,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "login.html"; return;
   }
   const decodeToken = parseJwt(token);
-  console.log(decodeToken);
+  // console.log(decodeToken);
   const isAdmin = decodeToken.ispremiumuser;
   const isPremium = localStorage.getItem('isPremium') === 'true';
   
@@ -205,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       return response.json();
     }).then(data => {
-      console.log(data.expenses);
+      // console.log(data.expenses);
       // Handle your expenses
       data.expenses.forEach(expense => displayExpense(expense));
     })

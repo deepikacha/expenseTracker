@@ -5,6 +5,7 @@ const User = require('../models/user');
 const { createObjectCsvWriter } = require('csv-writer')
 const path = require('path');
 
+
 // Add a new expense
 exports.addExpense = async (req, res) => {
   const { amount, description, category } = req.body;
@@ -156,15 +157,30 @@ exports.showLeaderboard = async (req, res) => {
 // Generate and download CSV file for user's expenses (premium users only)
 exports.downloadExpenses = async (req, res) => {
   const userId = req.user.id;
+  const { filter } = req.query;
+  let whereCondition = { userId };
+   let date = new Date();
   console.log(userId)
+  if (filter === 'daily') {
+     whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 1))
+       
+      
+     } 
+     else if (filter === 'weekly') { 
+      whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 7))
+        
+         
+         }
+          else if (filter === 'monthly') {
+    whereCondition.createdAt =  new Date(date.setMonth(date.getMonth() - 1)) 
+      }
   try {
     // Fetch expenses for the user from the database
-    const expenses = await Expense.findAll({ where: { userId } });
+    console.log(whereCondition)
+    const expenses = await Expense.findAll({ where:  {userId},attributes:["amount","description","category","createdAt"] });
     console.log(expenses)
-    if (expenses.length === 0) {
-      return res.status(404).json({ message: "No expenses found for the user" });
-    }
-    console.log(expenses)
+   
+    
   res.json({expenses})
     
   
