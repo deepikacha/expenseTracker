@@ -2,6 +2,8 @@ const { Sequelize } = require('sequelize');
 const sequelize = require('../util/database'); // Ensure to import the sequelize instance correctly
 const Expense = require('../models/expense');
 const User = require('../models/user');
+const { createObjectCsvWriter } = require('csv-writer')
+const path = require('path');
 
 // Add a new expense
 exports.addExpense = async (req, res) => {
@@ -108,7 +110,9 @@ exports.getExpenses = async (req, res) => {
 };
 
 exports.getAllExpenses = (req, res) => {
-  Expense.findAll()
+  const userId=req.user.id
+ 
+   Expense.findAll({ where: { userId } })
     .then(expenses => {
       return res.status(200).json({ expenses, success: true });
     })
@@ -144,5 +148,30 @@ exports.showLeaderboard = async (req, res) => {
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({ message: 'Error fetching leaderboard' });
+  }
+};
+
+
+
+// Generate and download CSV file for user's expenses (premium users only)
+exports.downloadExpenses = async (req, res) => {
+  const userId = req.user.id;
+  console.log(userId)
+  try {
+    // Fetch expenses for the user from the database
+    const expenses = await Expense.findAll({ where: { userId } });
+    console.log(expenses)
+    if (expenses.length === 0) {
+      return res.status(404).json({ message: "No expenses found for the user" });
+    }
+    console.log(expenses)
+  res.json({expenses})
+    
+  
+  
+  }
+  catch (error) {
+    console.error('Error writing CSV file:', error);
+    res.status(500).json({ message: 'Error generating CSV file' });
   }
 };

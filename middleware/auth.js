@@ -2,6 +2,7 @@
 const User=require('../models/user')
 const{verifyToken}=require('../util/jwt')
 exports.Authorize = async (req, res,next) => {
+   console.log("start")
     try{
  const token= req.headers.authorization;   
  console.log(token,"middlewareauth line 6");
@@ -17,7 +18,9 @@ exports.Authorize = async (req, res,next) => {
  if(!user){
     return res.status(404).json({message:"User not found"})
  }
+
  req.user=user;
+ console.log("end")
  next();
 
     }
@@ -27,4 +30,10 @@ exports.Authorize = async (req, res,next) => {
     }
 
 }
+
+// Define checkPremium middleware
+
+ // Export the middleware if needed
+ 
+ 
 

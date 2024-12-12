@@ -21,15 +21,6 @@
     <button id="signup-btn">New User? Signup</button>
     <button id="forgot-password-btn">Forgot Password?</button>
 
-    <div id="forgot-password-form-container" style="display: none;">
-        <h2>Forgot Password</h2>
-        <form id="forgot-password-form">
-            <label for="forgot-email">Email:</label>
-            <input type="email" id="forgot-email" placeholder="Enter your email" required>
-            <button type="submit">Submit</button>
-        </form>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios script -->
     <script>
         document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -89,29 +80,8 @@
         });
 
         document.getElementById('forgot-password-btn').addEventListener('click', () => {
-            document.getElementById('forgot-password-form-container').style.display = 'block';
-        });
-
-        document.getElementById('forgot-password-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('forgot-email').value.trim();
-        
-            if (!email) {
-                alert("Please enter your email.");
-                return;
-            }
-
-            // Make POST request to backend for forgot password
-            axios.post('http://localhost:3000/password/forgotpassword', { email })
-            .then(response => {
-                alert("Password reset link sent to your email.");
-                document.getElementById('forgot-password-form').style.display = 'none';
-            })
-            .catch(error => {
-                console.error('Error during password reset:', error);
-                alert("An error occurred while sending password reset link.");
-            });
+            window.location.href = 'forgot-password.html';
         });
     </script>
 </body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      padding: 20px;
+    }
+    .filters {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .transactions {
+      margin-top: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .transactions table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .transactions th, .transactions td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    .transactions th {
+      background-color: #f2f2f2;
+    }
+    .download-btn {
+      margin: 20px 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .download-btn button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .download-btn button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Expense Tracker</h1>
+    </div>
+    <div class="filters">
+      <div>
+        <label for="filter">Filter By:</label>
+        <select id="filter">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="download-btn">
+        <button id="download-btn" disabled>Download Expenses</button>
+      </div>
+    </div>
+    <div class="transactions">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="transaction-body">
+          <!-- Transaction rows will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <script>
+    const transactions = [
+      { date: '2024-12-01', description: 'Grocery', amount: 50, type: 'Expense' },
+      { date: '2024-12-01', description: 'Salary', amount: 500, type: 'Income' },
+      { date: '2024-12-02', description: 'Electricity Bill', amount: 30, type: 'Expense' },
+      // More sample data...
+    ];
+
+    function displayTransactions(filter = 'daily') {
+      const tbody = document.getElementById('transaction-body');
+      tbody.innerHTML = '';
+
+      const filteredTransactions = transactions.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        const today = new Date();
+        
+        if (filter === 'daily') {
+          return transactionDate.toDateString() === today.toDateString();
+        } else if (filter === 'weekly') {
+          const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          return transactionDate >= weekStart && transactionDate <= weekEnd;
+        } else if (filter === 'monthly') {
+          return transactionDate.getMonth() === today.getMonth() && transactionDate.getFullYear() === today.getFullYear();
+        }
+        return true;
+      });
+
+      filteredTransactions.forEach(transaction => {
+        const row = `<tr>
+          <td>${transaction.date}</td>
+          <td>${transaction.description}</td>
+          <td>${transaction.amount}</td>
+          <td>${transaction.type}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    document.getElementById('filter').addEventListener('change', function() {
+      displayTransactions(this.value);
+    });
+
+    // Initially display daily transactions
+    displayTransactions();
+
+    const isPremiumUser = true; // This should be determined by your backend and passed to the frontend
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isPremiumUser) {
+        document.getElementById('download-btn').disabled = false;
+      }
+    });
+
+    document.getElementById('download-btn').addEventListener('click', function() {
+      if (isPremiumUser) {
+        const csv = transactions.map(t => `${t.date},${t.description},${t.amount},${t.type}`).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'transactions.csv');
+        a.click();
+      }
+    });
+  </script>
+</body>
+</html>
