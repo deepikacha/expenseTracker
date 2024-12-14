@@ -8,7 +8,7 @@ router.get('/expenses', Authorize,expenseController.getExpenses);
 router.delete('/expenses/:expenseid',Authorize, expenseController.deleteExpense);
 router.get('/premium/showLeaderboard', Authorize, expenseController.showLeaderboard);
 // router.get('/user/download', Authorize,  expenseController.downloadExpenses);
-router.get('/download',Authorize, expenseController.downloadExpenses)
+router.get('/user/download',Authorize, expenseController.downloadExpenses)
     
 
 module.exports = router;

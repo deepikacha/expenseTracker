@@ -119,68 +119,116 @@ function displayLeaderboard(data) {
 function parseJwt(token) {
   var base64Url = token.split('.')[1];
   var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-   var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
-     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')); 
-     return JSON.parse(jsonPayload);
+  var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
 } // Load expenses from the backend on page load 
-
 function download() {
   const token = localStorage.getItem('token');
- 
- const filter = document.getElementById('filter').value;
+  axios.get('http://localhost:3000/user/download', { headers: { "Authorization": token } })
+    .then(response => {
+      if (response.status === 200) {
+        var a = document.createElement("a");
+        a.href = response.data.fileURL;
+        a.download = 'myexpense.csv';
+        a.click();
+        fetchDownloadedFiles();
 
-  axios.get(`http://localhost:3000/download?filter=${filter}`, {
-    headers: {"Content-Type": "application/json",
-      Authorization: token,
-    
-      
-    }
-  })
-    .then((response) => {
-      let expenses= response.data.expenses;
-      
-      let csvContent=convertToCSV(expenses);
-      let blob=new Blob([csvContent],{type:"text/csv"})
-      let url=URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      let filename=`expense_${token}_${new Date()}.csv`
-      a.setAttribute("href", url)
-      a.setAttribute("download", filename);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-  
-      URL.revokeObjectURL(url);
-  
 
-       
-       
-      
+      }
+      else {
+        throw new Error(response.data.message)
+      }
     })
     .catch((err) => {
-      console.error('Error downloading file:', err);
-      alert('Failed to download file. Please try again.');
-    });
+      console.log(err)
+    })
 }
 
-function convertToCSV(objects){
-  if (!objects || !objects.length) {
-    return "";
+function fetchDownloadedFiles() {
+  const token = localStorage.getItem('token');
+  axios.get('http://localhost:3000/user/download', { headers: { "Authorization": token } })
+    .then(response => {
+      if (response.status === 200) {
+        displayDownloadedFiles(response.data);
+
+      }
+      else { throw new Error(response.data.message); }
+    })
+    .catch(err => { console.error('Error fetching downloaded files:', err); });
 }
 
-// Extract headers (keys)
-const headers = Object.keys(objects[0]);
-
-// Map data to CSV rows
-const rows = objects.map(obj => 
-    headers.map(header => JSON.stringify(obj[header], null, 2)).join(",")
-);
-
-// Combine headers and rows
-return [headers.join(","), ...rows].join("\n");
-
-
+function displayDownloadedFiles(files) {
+  const downloadedList = document.getElementById('downloadedList');
+  downloadedList.innerHTML = '';
+  files.forEach(file => {
+    const li = document.createElement('li');
+    li.textContent = `${file.fileName} (Downloaded on: ${new Date(file.createdAt).toLocaleString()})`;
+    const downloadLink = document.createElement('a');
+    downloadLink.href = file.url;
+    downloadLink.textContent = ' Download';
+    downloadLink.style.marginLeft = '10px';
+    li.appendChild(downloadLink); downloadedList.appendChild(li);
+  });
 }
+// function download() {
+//   const token = localStorage.getItem('token');
+
+//  const filter = document.getElementById('filter').value;
+
+//   axios.get(`http://localhost:3000/download?filter=${filter}`, {
+//     headers: {"Content-Type": "application/json",
+//       Authorization: token,
+
+
+//     }
+//   })
+//     .then((response) => {
+//       let expenses= response.data.expenses;
+
+//       let csvContent=convertToCSV(expenses);
+//       let blob=new Blob([csvContent],{type:"text/csv"})
+//       let url=URL.createObjectURL(blob);
+//       const a = document.createElement("a");
+//       let filename=`expense_${token}_${new Date()}.csv`
+//       a.setAttribute("href", url)
+//       a.setAttribute("download", filename);
+//       document.body.appendChild(a);
+//       a.click();
+//       document.body.removeChild(a);
+
+//       URL.revokeObjectURL(url);
+
+
+
+
+
+//     })
+//     .catch((err) => {
+//       console.error('Error downloading file:', err);
+//       alert('Failed to download file. Please try again.');
+//     });
+// }
+
+// function convertToCSV(objects){
+//   if (!objects || !objects.length) {
+//     return "";
+// }
+
+// // Extract headers (keys)
+// const headers = Object.keys(objects[0]);
+
+// // Map data to CSV rows
+// const rows = objects.map(obj => 
+//     headers.map(header => JSON.stringify(obj[header], null, 2)).join(",")
+// );
+
+// // Combine headers and rows
+// return [headers.join(","), ...rows].join("\n");
+
+
+// }
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem('token');
 
@@ -193,13 +241,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // console.log(decodeToken);
   const isAdmin = decodeToken.ispremiumuser;
   const isPremium = localStorage.getItem('isPremium') === 'true';
-  
-  if (isPremium || isAdmin) { showPremiumuserMessage();
+
+  if (isPremium || isAdmin) {
+    showPremiumuserMessage();
     document.getElementById('downloadexpense').disabled = false
-   }
-   else{
+  }
+  else {
     document.getElementById('downloadexpense').disabled = true
-   }
+  }
   fetch("http://localhost:3000/expenses/all", {
     headers: { "Content-Type": "application/json", Authorization: token },
   })

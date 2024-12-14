@@ -4,6 +4,9 @@ const Expense = require('../models/expense');
 const User = require('../models/user');
 const { createObjectCsvWriter } = require('csv-writer')
 const path = require('path');
+const { Parser } = require('json2csv');
+const Downloaded=require('../models/Downloaded')
+const AWSService=require('../services/S3services')
 
 
 // Add a new expense
@@ -152,42 +155,78 @@ exports.showLeaderboard = async (req, res) => {
   }
 };
 
-
-
-// Generate and download CSV file for user's expenses (premium users only)
 exports.downloadExpenses = async (req, res) => {
-  const userId = req.user.id;
-  const { filter } = req.query;
-  let whereCondition = { userId };
-   let date = new Date();
-  console.log(userId)
-  if (filter === 'daily') {
-     whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 1))
-       
-      
-     } 
-     else if (filter === 'weekly') { 
-      whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 7))
-        
-         
-         }
-          else if (filter === 'monthly') {
-    whereCondition.createdAt =  new Date(date.setMonth(date.getMonth() - 1)) 
-      }
   try {
-    // Fetch expenses for the user from the database
-    console.log(whereCondition)
+    
+     const userId = req.user.id;
+
+    // const expenses = await req.user.getExpenses({
+    //   attributes: ['amount', 'category', 'description', 'createdAt']
+    // });
+
     const expenses = await Expense.findAll({ where:  {userId},attributes:["amount","description","category","createdAt"] });
-    console.log(expenses)
-   
-    
-  res.json({expenses})
-    
-  
-  
-  }
-  catch (error) {
-    console.error('Error writing CSV file:', error);
-    res.status(500).json({ message: 'Error generating CSV file' });
+
+    // Convert JSON to CSV
+    const fields = ['amount', 'category', 'description', 'createdAt'];
+    const json2csvParser = new Parser({ fields });
+    const csv = json2csvParser.parse(expenses);
+
+    // Generate unique key for the file
+    const key = `myExpenses-${userId}-${Date.now()}.csv`;
+
+    // Upload CSV to S3 using AWSService
+    const uploadResult = await AWSService.uploadToS3(process.env.BUCKETNAME, key, csv);
+
+    // const response = await req.user.createDownloaded(fileInfo);
+
+    const file = new Downloaded({
+      userId,
+      fileName: key,
+      url: uploadResult.Location
+    })
+
+    await file.save()
+
+    return res.status(200).json({ fileUrl: uploadResult.Location });
+  } catch (err) {
+    console.log(err)
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+// Generate and download CSV file for user's expenses (premium users only)
+// exports.downloadExpenses = async (req, res) => {
+//   const userId = req.user.id;
+//   const { filter } = req.query;
+//   let whereCondition = { userId };
+//    let date = new Date();
+//   console.log(userId)
+//   if (filter === 'daily') {
+//      whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 1))
+       
+      
+//      } 
+//      else if (filter === 'weekly') { 
+//       whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 7))
+        
+         
+//          }
+//           else if (filter === 'monthly') {
+//     whereCondition.createdAt =  new Date(date.setMonth(date.getMonth() - 1)) 
+//       }
+//   try {
+//     // Fetch expenses for the user from the database
+//     console.log(whereCondition)
+//     const expenses = await Expense.findAll({ where:  {userId},attributes:["amount","description","category","createdAt"] });
+//     console.log(expenses)
+   
+    
+//   res.json({expenses})
+    
+  
+  
+//   }
+//   catch (error) {
+//     console.error('Error writing CSV file:', error);
+//     res.status(500).json({ message: 'Error generating CSV file' });
+//   }
+// };
