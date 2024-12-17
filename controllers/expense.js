@@ -1,8 +1,7 @@
 const { Sequelize } = require('sequelize');
-const sequelize = require('../util/database'); // Ensure to import the sequelize instance correctly
+const sequelize = require('../util/database'); 
 const Expense = require('../models/expense');
 const User = require('../models/user');
-const { createObjectCsvWriter } = require('csv-writer')
 const path = require('path');
 const { Parser } = require('json2csv');
 const Downloaded=require('../models/Downloaded')
@@ -13,16 +12,12 @@ const AWSService=require('../services/S3services')
 exports.addExpense = async (req, res) => {
   const { amount, description, category } = req.body;
   const userId = req.user.id;
-
-  const t = await sequelize.transaction(); // Use the correct Sequelize instance
-
-  console.log("message");
-  console.log(req.body);
+  const transaction = await sequelize.transaction(); 
 
   if (!amount || !description || !category) {
     return res.status(400).json({ error: "All fields are required." });
   }
-  console.log(req.user.id);
+
 
   try {
     // Create the new expense
@@ -31,17 +26,17 @@ exports.addExpense = async (req, res) => {
       description,
       category,
       userId
-    }, { transaction: t });
+    }, { transaction: transaction });
 
     // Update the user's total expense
-    const user = await User.findByPk(userId, { transaction: t });
+    const user = await User.findByPk(userId, { transaction: transaction });
     user.totalexpense += parseFloat(amount); // Ensure amount is a float
-    await user.save({ transaction: t });
+    await user.save({ transaction: transaction});
 
-    await t.commit(); // Commit the transaction
+    await transaction.commit(); // Commit the transaction
     return res.status(201).json(newExpense);
   } catch (error) {
-    await t.rollback(); // Rollback the transaction if any error occurs
+    await transaction.rollback(); // Rollback the transaction if any error occurs
     console.error('Error adding expense:', error.message);
     return res.status(500).json({ message: 'Error adding expense' });
   }
@@ -55,35 +50,35 @@ exports.deleteExpense = async (req, res) => {
     return res.status(400).json({ success: false });
   }
 
-  const t = await sequelize.transaction(); // Use the correct Sequelize instance
+  const transaction = await sequelize.transaction(); // Use the correct Sequelize instance
 
   try {
     // Find the expense
     const expense = await Expense.findOne({
       where: { id: expenseid, userId: req.user.id },
-      transaction: t
+      transaction: transaction
     });
 
     if (!expense) {
-      await t.rollback();
+      await transaction.rollback();
       return res.status(404).json({ success: false, message: "Expense doesn't belong to user" });
     }
 
     // Delete the expense
     await Expense.destroy({
       where: { id: expenseid, userId: req.user.id },
-      transaction: t
+      transaction: transaction
     });
 
     // Update the user's total expense
-    const user = await User.findByPk(req.user.id, { transaction: t });
+    const user = await User.findByPk(req.user.id, { transaction: transaction});
     user.totalexpense -= parseFloat(expense.amount); // Ensure amount is a float
-    await user.save({ transaction: t });
+    await user.save({ transaction: transaction });
 
-    await t.commit(); // Commit the transaction
+    await transaction.commit(); // Commit the transaction
     return res.status(200).json({ success: true, message: "Deleted successfully" });
   } catch (error) {
-    await t.rollback(); // Rollback the transaction if any error occurs
+    await transaction.rollback(); // Rollback the transaction if any error occurs
     console.error('Error deleting expense:', error.message);
     return res.status(500).json({ success: false, message: "Failed to delete expense" });
   }
@@ -92,42 +87,85 @@ exports.deleteExpense = async (req, res) => {
 // Other existing functions...
 exports.getExpenses = async (req, res) => {
   try {
-    console.log("success");
-    const userId = req.user.id;
+  const userId = req.user.id;
+  const user=req.user;
+ 
+  const page=parseInt(req.query.page)||1;
+  const limit=parseInt(req.query.limit)||10;
+  const offset=(page-1)*limit;
+ 
+const {rows:expenses,count} = await  Expense.findAndCountAll({
+  where:{userId:user.id},
+  limit,
+  offset
+
+})
+const isPremium=await user.ispremiumuser;
+  
+    // const { count, rows: expenses } = await Expense.findAndCountAll({ where: { userId },
+    //    limit, offset, order: [['createdAt', 'DESC']] });
+    
     // Fetch all expenses from the database
-    const expenses = await Expense.findAll({
-      where: { userId }
-    });
+    // const expenses = await Expense.findAll({
+    //   where: { userId }
+    // });
+    // console.log(expenses)
 
     // Render the 'expense.ejs' view and pass the expenses data
-    res.render('expense', {
-      pageTitle: 'Expense Tracker',
-      expenses: expenses, // Pass expenses to the view
-    });
+    // res.render('expense', {
+    //   pageTitle: 'Expense Tracker',
+    //   expenses: expenses, // Pass expenses to the view
+    // });
+     
+     res.json({
+      expenses,
+      isPremium,
+      pagination:{
+        currentPage:page,
+        totalPages:Math.ceil(count/limit),
+        totalItems:count,
+        itemsPerPage:limit,
+      }
+     })
+
   } catch (error) {
-    console.error("Error fetching expenses:", error.message);
-    res.status(500).render('error', {
-      pageTitle: 'Error',
-      errorMessage: "An error occurred while fetching expenses."
-    });
+    res.status(500).json({message:"internal server error"})
   }
 };
 
-exports.getAllExpenses = (req, res) => {
-  const userId=req.user.id
+exports.getDownoadFiles=async(req,res)=>{
+  const userId=req.user.id;
+  try{
+  const downloaded=await Downloaded.findAll({where:{userId},
+     attributes:['fileName','url','createdAt']
+    
+  })
+  console.log("downloaded")
+  return res.status(200).json({downloaded})
+}
+catch(error){
+  res.status(500).json({message:"an error occuring while displaying urls"})
+}
+
+}
+
+// exports.getAllExpenses = (req, res) => {
+//   const userId=req.user.id
  
-   Expense.findAll({ where: { userId } })
-    .then(expenses => {
-      return res.status(200).json({ expenses, success: true });
-    })
-    .catch(err => {
-      console.log(err);
-    });
-};
+//    Expense.findAll({ where: { userId } })
+//     .then(expenses => {
+//       return res.status(200).json({ expenses, success: true });
+//     })
+//     .catch(err => {
+//       console.log(err);
+//     });
+// };
 
 exports.showLeaderboard = async (req, res) => {
   try {
-    const leaderboard = await User.findAll({
+    const userId = req.user.id;
+    const leaderboard = await User.findOne({
+      where: { id: userId },
       attributes: [
         'name',
         [Sequelize.fn('SUM', Sequelize.col('expenses.amount')), 'totalexpense']
@@ -143,10 +181,14 @@ exports.showLeaderboard = async (req, res) => {
     });
 
     // Ensure the result is in JSON format
-    const leaderboardData = leaderboard.map(user => ({
-      name: user.name,
-      totalexpense: user.dataValues.totalexpense
-    }));
+    // const leaderboardData = leaderboard.map(user => ({
+    //   name: user.name,
+    //   totalexpense: user.dataValues.totalexpense
+    // }));
+    const leaderboardData = {
+      name: leaderboard.name,
+      totalexpense: leaderboard.dataValues.totalexpense,
+    };
 
     res.status(200).json(leaderboardData);
   } catch (error) {
@@ -159,10 +201,16 @@ exports.downloadExpenses = async (req, res) => {
   try {
     
      const userId = req.user.id;
+     const ispremium=req.user.ispremiumuser;
 
     // const expenses = await req.user.getExpenses({
     //   attributes: ['amount', 'category', 'description', 'createdAt']
     // });
+    console.log(ispremium)
+    if(!ispremium){
+      
+     return res.status(401).json({message:"not a premium user"})
+    }
 
     const expenses = await Expense.findAll({ where:  {userId},attributes:["amount","description","category","createdAt"] });
 
@@ -186,47 +234,14 @@ exports.downloadExpenses = async (req, res) => {
     })
 
     await file.save()
-
+    // console.log(uploadResult.Location)
     return res.status(200).json({ fileUrl: uploadResult.Location });
+
   } catch (err) {
     console.log(err)
     return res.status(500).json({ message: "Internal server error" });
   }
-};
-// Generate and download CSV file for user's expenses (premium users only)
-// exports.downloadExpenses = async (req, res) => {
-//   const userId = req.user.id;
-//   const { filter } = req.query;
-//   let whereCondition = { userId };
-//    let date = new Date();
-//   console.log(userId)
-//   if (filter === 'daily') {
-//      whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 1))
-       
-      
-//      } 
-//      else if (filter === 'weekly') { 
-//       whereCondition.createdAt =  new Date(date.setDate(date.getDate() - 7))
-        
-         
-//          }
-//           else if (filter === 'monthly') {
-//     whereCondition.createdAt =  new Date(date.setMonth(date.getMonth() - 1)) 
-//       }
-//   try {
-//     // Fetch expenses for the user from the database
-//     console.log(whereCondition)
-//     const expenses = await Expense.findAll({ where:  {userId},attributes:["amount","description","category","createdAt"] });
-//     console.log(expenses)
-   
-    
-//   res.json({expenses})
-    
-  
-  
-//   }
-//   catch (error) {
-//     console.error('Error writing CSV file:', error);
-//     res.status(500).json({ message: 'Error generating CSV file' });
-//   }
-// };
+}
+
+
+

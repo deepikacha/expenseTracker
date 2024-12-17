@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../util/database'); // Ensure to import the sequelize instance correctly
-
+const User = require('./user');
 class Downloaded extends Model {}
 
 Downloaded.init({
@@ -13,6 +13,7 @@ Downloaded.init({
   userId: {
     type: DataTypes.UUID,
     allowNull: false
+    
   },
   fileName: {
     type: DataTypes.STRING,
@@ -31,5 +32,8 @@ Downloaded.init({
   sequelize,
   modelName: 'downloaded'
 });
+
+User.hasMany(Downloaded, { foreignKey: 'userId' });
+Downloaded.belongsTo(User, { foreignKey: 'id' });
 
 module.exports = Downloaded;

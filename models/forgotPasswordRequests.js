@@ -23,7 +23,6 @@ const ForgotPasswordRequests = sequelize.define('ForgotPasswordRequests', {
   }
 });
 
-User.hasMany(ForgotPasswordRequests, { foreignKey: 'userId' });
-ForgotPasswordRequests.belongsTo(User, { foreignKey: 'userId' });
+
 
 module.exports = ForgotPasswordRequests;

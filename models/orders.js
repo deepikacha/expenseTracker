@@ -9,6 +9,9 @@ const Order=sequelize.define('order',{
     },
     paymentid:Sequelize.STRING,
     orderid:Sequelize.STRING,
-    status:Sequelize.STRING
+    status:{
+        type:Sequelize.STRING,
+        defaultValue:'pending'
+    }
 })
 module.exports=Order;

@@ -1,6 +1,6 @@
 const Razorpay = require('razorpay');
 const Order = require('../models/orders');
-const { generateAccessToken } = require('./auth'); // Import the function
+const { generateToken } = require('../util/jwt'); 
 
 const purchasepremium = async (req, res) => {
   try {
@@ -38,19 +38,25 @@ const purchasepremium = async (req, res) => {
   }
 };
 
+
 const updateTransactionStatus = async (req, res) => {
   try {
-    const { payment_id, order_id, status } = req.body;
+    const { paymentid, orderid, status } = req.body;
 
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized: User not logged in" });
     }
 
-    console.log("Received data - payment_id:", payment_id, "order_id:", order_id, "status:", status);
+    console.log("Received data - paymentid:", paymentid, "orderid:", orderid, "status:", status);
 
-    const order = await Order.findOne({ where: { orderid: order_id } });
+    if (!orderid || !paymentid) {
+      console.error("Order ID or Payment ID is missing");
+      return res.status(400).json({ message: "Order ID or Payment ID is missing" });
+    }
+
+    const order = await Order.findOne({ where: { orderid } });
     if (!order) {
-      console.error("Order not found for order_id:", order_id);
+      console.error("Order not found for orderid:", orderid);
       return res.status(404).json({ message: "Order not found" });
     }
 
@@ -68,7 +74,7 @@ const updateTransactionStatus = async (req, res) => {
       try {
         await Promise.all([
           order.update({
-            paymentid: payment_id,
+            paymentid: paymentid,
             status: "SUCCESS",
           }),
           req.user.update({ ispremiumuser: true }),
@@ -77,7 +83,7 @@ const updateTransactionStatus = async (req, res) => {
         return res.status(202).json({
           success: true,
           message: "Transaction Successful",
-          token: generateAccessToken(req.user.id, undefined, true),
+          token: generateToken(req.user.id),
         });
       } catch (updateError) {
         console.error("Error updating order or user:", updateError.message);
@@ -88,12 +94,16 @@ const updateTransactionStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid transaction status" });
     }
   } catch (err) {
-    console.error("Error in updateTransactionStatus:", err.stack || err.message);
+    console.error("Error in updateTransactionStatus:", err.message);
     return res.status(500).json({ message: "Failed to update transaction", error: err.message });
   }
 };
+
+
 
 module.exports = {
   purchasepremium,
   updateTransactionStatus,
 };
+
+   

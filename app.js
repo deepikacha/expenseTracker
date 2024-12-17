@@ -9,7 +9,9 @@ const ForgotPasswordRequests = require('./models/forgotPasswordRequests'); // Im
 const User = require('./models/user');
 const Expense = require('./models/expense');
 const Order = require('./models/orders');
+const Download = require('./models/Downloaded')
 const path = require('path');
+const Downloaded = require('./models/Downloaded');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -29,20 +31,31 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-User.hasMany(Expense);
-Expense.belongsTo(User);
+//one user can have many expenses
+User.hasMany(Expense,{ foreignKey: 'userId' });
+Expense.belongsTo(User,{ foreignKey: 'userId' });
+//  one user can have many orders
+User.hasMany(Order,{ foreignKey: 'userId' });
+Order.belongsTo(User,{ foreignKey: 'userId' });
+//one user can have many forgotpasswordrequests
+User.hasMany(ForgotPasswordRequests, { foreignKey: 'userId' });
+ForgotPasswordRequests.belongsTo(User, { foreignKey: 'userId' });
+//one user can have many downloads
+User.hasMany(Download,{foreignKey:'userId'});
+Download.belongsTo(User,{foreignKey:'userId'})
 
-User.hasMany(Order);
-Order.belongsTo(User);
 
-
-
-sequelize
-  .sync({ alter: true })
-  .then(result => {
-    console.log('Database connected and altered.');
+async function initialise() {
+  try {
+    await sequelize.sync(
+      // {  force:true}
+    )
     app.listen(3000, () => {
       console.log('Server is running on http://localhost:3000');
     });
-  })
-  .catch(err => console.log('Database connection error:', err));
+  }
+  catch (error) {
+    console.log(error.message)
+  }
+}
+initialise()

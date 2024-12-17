@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -11,13 +12,16 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+
     form {
       margin-bottom: 20px;
     }
+
     ul {
       list-style-type: none;
       padding: 0;
     }
+
     li {
       margin-bottom: 10px;
       padding: 10px;
@@ -25,18 +29,23 @@
       border: 1px solid #ddd;
       border-radius: 5px;
     }
+
     button {
       margin-left: 10px;
     }
+
     .premium-controls {
-      display: none; /* Initially hidden, show only for premium users */
+      display: none;
+      /* Initially hidden, show only for premium users */
       justify-content: space-between;
       margin-bottom: 20px;
     }
+
     .download-btn {
       display: flex;
       justify-content: flex-end;
     }
+
     .download-btn button {
       padding: 10px 20px;
       border: none;
@@ -45,8 +54,28 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
+
 <body>
   <h1>Expense Tracker</h1>
   <form onsubmit="handleFormSubmit(event)">
@@ -57,28 +86,51 @@
     <input type="text" name="description" id="description" required />
     <br /><br />
     <label for="category">Category:</label>
-    <input type="text" name="category" id="category" required />
+    <!-- <input type="text" name="category" id="category" required /> -->
+    <select name="category" id="category" required>
+      <option value="food">Food</option>
+      <option value="fuel">Fuel</option>
+      <option value="salary">Salary</option>
+    </select>
     <br /><br />
     <button type="submit">Add Expense</button>
   </form>
-  <h2>Filter By</h2> <select id="filter"> <option value="all">All</option>
-     <option value="daily">Daily</option> 
+  <h2>Filter By</h2> <select id="filter">
+    <option value="all">All</option>
+    <option value="daily">Daily</option>
     <option value="weekly">Weekly</option>
-     <option value="monthly">Monthly</option> 
-    </select>
-    <h2>Expenses</h2>
-    <ul id="expenseList"></ul>
+    <option value="monthly">Monthly</option>
+  </select>
+  <h2>Expenses</h2>
+  <ul id="expenseList"></ul>
+  <div id="message"></div>
   <button id="rzp-button">Buy Premium</button>
- 
-  <div class="download-btn"> 
-    <button onclick="download()" id="downloadexpense" disabled>Download File</button> 
+
+  <div class="download-btn">
+    <button onclick="downloadHistory()" id="downloadexpense">Download File</button>
   </div>
-  
-  <h2>Previous Downloads</h2> 
+  <div class="pagination">
+    <button id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage" onclick="changePage(1)" disabled>Next</button>
+  </div>
+
+
+  <h2>Previous Downloads</h2>
   <ul id="downloadedList"></ul>
-  
+
+  <!-- <button class="button open-button">open modal</button> -->
+  <dialog class="modal" id="modal">
+    <!-- <dialog id="downoadListModel">dowmloadList</dialog> -->
+    <!-- <button class="button close-button">close modal</button> -->
+  </dialog>
+
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="expense.js"></script>
+
+
+
 </body>
+
 </html>
