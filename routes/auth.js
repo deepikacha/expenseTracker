@@ -1,17 +1,14 @@
 const express = require('express');
-const authController = require('../controllers/auth');
+const {Authorize}=require('../middleware/auth')
+const { forgotPassword, resetPassword, registerUser, loginUser, updatePassword,getUserData } = require('../controllers/userController');
 const router = express.Router();
 
-router.post('/register', authController.registerUser);
-router.post('/login', authController.loginUser);
-router.post('/password/forgotpassword', authController.forgotPassword); // Forgot password route
-router.get('/password/reset-password/:id', authController.resetPassword);
- // Reset password route
-//   router.get('/password/reset-password/:id', (req,res)=>{
-//     console.log("msg")
-//     req.send("message:success")
-//   });
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/password/forgotpassword', forgotPassword); 
+router.get('/password/reset-password/:id', resetPassword);
 
-router.post('/password/updatepassword/:id', authController.updatePassword); // Update password route
+router.post('/password/updatepassword/:id', updatePassword); 
+router.get('/user/data',Authorize,getUserData)
 
 module.exports = router;

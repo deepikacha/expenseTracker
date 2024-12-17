@@ -1,5 +1,5 @@
-let currentPage = 1;
-const limit = 10;
+
+
 // const Razorpay = require("razorpay");
 
 function handleFormSubmit(event) {
@@ -255,41 +255,58 @@ function fetchDownloadedFiles() {
 }
 
 function loadExpenses(expenses) {
-   const expenseList = document.getElementById("expenseList"); expenseList.innerHTML = "";
-    expenses.forEach(expense => { const li = document.createElement("li");
-       li.textContent = `${expense.amount} - ${expense.description} - ${expense.category}`; 
-       expenseList.appendChild(li); 
-      }); 
-      }
+  const expenseList = document.getElementById("expenseList");
+  expenseList.innerHTML = "";
+  expenses.forEach(expense => {
+    const li = document.createElement("li");
+    li.setAttribute("data-id", expense.id);
+    li.textContent = `${expense.amount} - ${expense.description} - ${expense.category}`;
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deleteExpense(expense.id, li));
+    li.appendChild(deleteButton);
+    expenseList.appendChild(li);
+  });
+}
 
 function fetchExpenses(page, limit) {
-   const token = localStorage.getItem('token');
-    axios.get(`http://localhost:3000/expenses?page=${page}&limit=${limit}`,
-     { headers: { Authorization: token } })
-     .then(response => { loadExpenses(response.data.expenses);
-       updatePagination(response.data.pagination); })
-       .catch(error => { console.error('Error fetching expenses:', error); 
+  const token = localStorage.getItem("token");
+  axios.get(`http://localhost:3000/expenses?page=${page}&limit=${limit}`, {
+    headers: { Authorization: token },
+  })
+    .then(response => {
+      const { expenses, pagination } = response.data;
+      loadExpenses(expenses);
+      updatePagination(pagination);
+    })
+    .catch(error => {
+      console.error("Error fetching expenses:", error);
+    });
+}
+function updatePagination(pagination) {
+  const pageInfo = document.getElementById("pageInfo");
+  const prevPage = document.getElementById("prevPage");
+  const nextPage = document.getElementById("nextPage");
 
-       });
-       }
+  pageInfo.textContent = `Page ${pagination.currentPage} of ${pagination.totalPages}`;
+  prevPage.disabled = pagination.currentPage === 1;
+  nextPage.disabled = pagination.currentPage === pagination.totalPages;
+}
+function updateLimit() {
+  const limitSelector = document.getElementById("limit");
+  limit = limitSelector.value;
+  localStorage.setItem("expensesPerPage", limit);
+  currentPage = 1; // Reset to the first page
+  fetchExpenses(currentPage, limit);
+}
 
-       function updatePagination(pagination) {
-         document.getElementById("pageInfo").textContent = `Page ${pagination.currentPage} of ${pagination.totalPages}`;
-          document.getElementById("prevPage").disabled = pagination.currentPage === 1; 
-       document.getElementById("nextPage").disabled = pagination.currentPage === pagination.totalPages; }
+function changePage(direction) {
+  currentPage += direction;
+  fetchExpenses(currentPage, limit);
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
-  fetchExpenses(currentPage, limit);
-  document.getElementById("prevPage").addEventListener("click", () => {
-     if (currentPage > 1) { 
-      currentPage--; fetchExpenses(currentPage, limit); 
-    }
-   });
-    document.getElementById("nextPage").addEventListener("click", () => { 
-    currentPage++; 
-    fetchExpenses(currentPage, limit);
-   });
-
+ 
   const token = localStorage.getItem('token');
 
   // Get token 
@@ -297,6 +314,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     alert("You must be logged in to view expenses");
     window.location.href = "login.html"; return;
   }
+   // Get `expensesPerPage` from localStorage or set a default value
+   // Get `expensesPerPage` from localStorage or set a default value
+  limit = localStorage.getItem("expensesPerPage") || 10; // Default to 10 if not set
+  currentPage = 1; // Start on the first page
+
+  // Update the dropdown to reflect the current limit
+  document.getElementById("limit").value = limit;
+
+  // Fetch and display expenses for the current page and limit
+  fetchExpenses(currentPage, limit);
+
+  // Add event listeners for pagination
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchExpenses(currentPage, limit);
+    }
+  });
+  document.getElementById("nextPage").addEventListener("click", () => {
+    currentPage++;
+    fetchExpenses(currentPage, limit);
+  });
+
+  // Update limit when the dropdown changes
+  document.getElementById("limit").addEventListener("change", updateLimit);
+
   try {
     const response = await axios.get('http://localhost:3000/user/data',
       {
@@ -320,20 +363,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   }
 
-  fetch("http://localhost:3000/expenses", {
-    headers: { "Content-Type": "application/json", Authorization: token },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch expenses');
-      }
-      return response.json();
-    }).then(data => {
-      // console.log(data.expenses);
-      // Handle your expenses
-      data.expenses.forEach(expense => displayExpense(expense));
-    })
-    .catch((error) => { console.error('Error loading expenses:', error); });
+  // fetch("http://localhost:3000/expenses", {
+  //   headers: { "Content-Type": "application/json", Authorization: token },
+  // })
+  //   .then((response) => {
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch expenses');
+  //     }
+  //     return response.json();
+  //   }).then(data => {
+  //     // console.log(data.expenses);
+  //     // Handle your expenses
+  //     data.expenses.forEach(expense => displayExpense(expense));
+  //   })
+  //   .catch((error) => { console.error('Error loading expenses:', error); });
 });
 document.getElementById('rzp-button').onclick = async function (e) {
   e.preventDefault();

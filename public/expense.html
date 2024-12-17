@@ -95,6 +95,16 @@
     <br /><br />
     <button type="submit">Add Expense</button>
   </form>
+  <div class="limit-selector">
+    <label for="limit">Expenses per page:</label>
+    <select id="limit" onchange="updateLimit()">
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+      <option value="30">30</option>
+      <option value="40">40</option>
+    </select>
+  </div>
   <h2>Filter By</h2> <select id="filter">
     <option value="all">All</option>
     <option value="daily">Daily</option>
