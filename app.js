@@ -12,10 +12,14 @@ const Order = require('./models/orders');
 const Download = require('./models/Downloaded')
 const path = require('path');
 const Downloaded = require('./models/Downloaded');
+const cors = require('cors');
+// const helmet=require('helmet');
 
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', 'views');
+app.use(cors());
+// app.use(helmet())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -50,8 +54,10 @@ async function initialise() {
     await sequelize.sync(
       // {  force:true}
     )
-    app.listen(3000, () => {
-      console.log('Server is running on http://localhost:3000');
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
     });
   }
   catch (error) {
