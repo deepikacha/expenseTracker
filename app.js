@@ -1,3 +1,4 @@
+// starting of app.js file
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const express = require('express');
