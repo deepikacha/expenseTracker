@@ -1,34 +1,70 @@
 
 
 // const Razorpay = require("razorpay");
+const logoutButton = document.querySelector(".btn-logout button");  // Select the button inside the div
+
+logoutButton.addEventListener("click", () => {
+  // Clear all data from local storage
+  localStorage.clear();
+  
+  // Redirect to the login page
+  window.location.href = "/login";
+});
+
 
 function handleFormSubmit(event) {
   event.preventDefault();
   const amount = event.target.amount.value;
   const description = event.target.description.value;
   const category = event.target.category.value;
+  const date = new Date().toLocaleDateString();
   // Ensure all fields are filled
   if (!amount || !description || !category) {
     alert("Please fill in all fields"); return;
   }
   const token = localStorage.getItem('token');
+  console.log(token)
   // Get the token
   if (!token) {
     // Check if token exists
-    alert("You must be logged in"); return;
+    const userResponse = confirm("You must be logged in to add an expense. Do you want to log in?");
+    if (userResponse) {
+      // Redirect to login page if user clicks 'OK'
+      window.location.href = '/login';
+    }
+    return;
   }
-  const expense = { amount, description, category, };
+  const expense = { amount, description, category,date: new Date().toLocaleDateString() };
   // Send POST request to add expense to backend
   fetch("http://localhost:3000/expenses", {
     headers: {
       "Content-Type": "application/json", Authorization: token
     }, method: "POST", body: JSON.stringify(expense),
   })
-    .then((response) => response.json()).then((savedExpense) => {
+  .then((response) => {
+    if (response.status === 401) {
+      alert('Please login');
+      window.location.href = '/login'; // Redirect to login page
+      return; // Prevent further code execution
+    } else if (response.ok) {
+      alert('Expense added successfully');
+      return response.json(); // Parse the response JSON
+    } else{
+      return response.json().then(data => {
+        alert(data.message || 'An error occurred');
+
+      });
+      }
+    
+  })
+    .then((savedExpense) => {
       // Display saved expense in the list
-      displayExpense(savedExpense);
-      // Reset form
-      event.target.reset();
+      if (savedExpense) {
+        // Display saved expense in the list
+        displayExpense(savedExpense);
+        // Reset form
+        event.target.reset();
+      }
     })
     .catch((error) => {
       console.error("Error saving expense:", error);
@@ -36,57 +72,173 @@ function handleFormSubmit(event) {
 }
 
 // Function to display an expense 
+// Function to display an expense in the table
 function displayExpense(expense) {
-  const expenseList = document.getElementById("expenseList");
-  const li = document.createElement("li");
-  li.setAttribute("data-id", expense.id);
-  li.textContent = `${expense.amount} - ${expense.description} - ${expense.category}`;
-  const token = localStorage.getItem('token');
-  // Ensure expense.id exists
+  const expensesTableBody = document.getElementById("expensesTableBody");
+
+  // Create a new row
+  const row = document.createElement("tr");
+
+  // Create table data for each expense field
+  const amountCell = document.createElement("td");
+  amountCell.textContent = expense.amount;
+  row.appendChild(amountCell);
+
+  const categoryCell = document.createElement("td");
+  categoryCell.textContent = expense.category;
+  row.appendChild(categoryCell);
+
+  const descriptionCell = document.createElement("td");
+  descriptionCell.textContent = expense.description;
+  row.appendChild(descriptionCell);
+
+  const dateCell = document.createElement("td");
+  dateCell.textContent = expense.date;
+  row.appendChild(dateCell);
+
+  // Create the action cell with a delete button
+  const actionCell = document.createElement("td");
   const deleteButton = document.createElement("button");
   deleteButton.textContent = "Delete";
   deleteButton.addEventListener("click", () => {
-    fetch(`http://localhost:3000/expenses/${expense.id}`,
-      { method: "DELETE", headers: { Authorization: token } }).then((response) => response.json())
+    deleteExpense(expense.id, row); // Pass expense ID and the row to be removed
+  });
+  actionCell.appendChild(deleteButton);
+  row.appendChild(actionCell);
+
+  // Append the row to the table body
+  expensesTableBody.appendChild(row);
+}
+
+
+function loadExpenses(expenses) {
+  console.log('Loading expenses:', expenses);
+  const expensesTableBody = document.getElementById("expensesTableBody");
+  expensesTableBody.innerHTML = ""; // Clear existing rows
+
+  // Loop through each expense and create a table row
+  expenses.forEach(expense => {
+    const row = document.createElement("tr");
+
+    const amountCell = document.createElement("td");
+    amountCell.textContent = expense.amount;
+    row.appendChild(amountCell);
+
+    const categoryCell = document.createElement("td");
+    categoryCell.textContent = expense.category;
+    row.appendChild(categoryCell);
+
+    const descriptionCell = document.createElement("td");
+    descriptionCell.textContent = expense.description;
+    row.appendChild(descriptionCell);
+
+    const dateCell = document.createElement("td");
+    dateCell.textContent = expense.date;
+    row.appendChild(dateCell);
+
+    // Add action buttons (like delete)
+    const actionCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deleteExpense(expense.id, row));
+    actionCell.appendChild(deleteButton);
+    row.appendChild(actionCell);
+
+    // Append the row to the table body
+    expensesTableBody.appendChild(row);
+  });
+}
+
+function fetchExpenses(page, limit) {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Please log in to view expenses.");
+    window.location.href = "/login"; // Redirect to login if no token is found
+    return;
+  }
+  axios.get(`http://localhost:3000/expenses?page=${page}&limit=${limit}`, {
+    headers: { Authorization: token },
+  })
+    .then(response => {
+      const { expenses, pagination } = response.data;
+      loadExpenses(expenses);
+      updatePagination(pagination);
+    })
+    .catch(error => {
+      console.error("Error fetching expenses:", error);
+    });
+}
+
+// Function to delete an expense from the UI and backend
+function deleteExpense(expenseId, row) {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    fetch(`http://localhost:3000/expenses/${expenseId}`, {
+      method: "DELETE",
+      headers: { Authorization: token }
+    })
+      .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          li.remove(); // Remove the expense from the list 
+          row.remove(); // Remove the row from the table
+        } else {
+          alert("Failed to delete expense");
         }
-        else { alert(data.message || "Failed to delete expense"); }
       })
-      .catch((error) => { console.error("Error deleting expense:", error); });
-  });
-  li.appendChild(deleteButton); expenseList.appendChild(li);
+      .catch((error) => {
+        console.error("Error deleting expense:", error);
+      });
+  } else {
+    alert("Please log in to delete expenses.");
+  }
 }
 
 function showPremiumuserMessage() {
   const addExpenseButton = document.querySelector('button[type="submit"]');
   const container = addExpenseButton.parentNode;
-  // Check if elements already exist to prevent duplication 
-  if (!document.getElementById("premium-message")) {
-    const premiumMessage = document.createElement("span");
-    premiumMessage.id = "premium-message";
-    premiumMessage.textContent = "You are a premium user now";
-    container.appendChild(premiumMessage);
-  }
-  if (!document.getElementById("show-leaderboard")) {
-    const showLeaderboardButton = document.createElement("button");
-    showLeaderboardButton.textContent = "Show Leaderboard";
-    showLeaderboardButton.id = "show-leaderboard";
-    container.appendChild(showLeaderboardButton);
-    // Add event listener for the "Show Leaderboard" 
-    showLeaderboardButton.addEventListener("click", fetchLeaderboard);
-  }
-  // Hide the "Buy Premium" button 
-  const buyPremiumButton = document.getElementById('rzp-button');
-  if (buyPremiumButton) {
-    buyPremiumButton.style.display = 'none';
 
+  // Update or create the premium message
+  const buyPremiumButton = document.getElementById('rzp-button'); // "Buy Premium" button
+  if (buyPremiumButton) {
+    // Update the button text and disable it
+    buyPremiumButton.textContent = "You are a premium user now";
+    buyPremiumButton.disabled = true;
+
+    // Apply the reversed gradient to the body background
+    document.body.style.background = "linear-gradient(43deg, #ffcc70 0%, #c850c0 46%, #4158d0 100%)";
+    document.body.style.backgroundAttachment = "fixed"; // Optional for a smoother experience
+  }
+
+  // Check if the leaderboard button already exists to prevent duplication
+  const showLeaderboardButton = document.getElementById("showLeaderboardBtn");
+  if (showLeaderboardButton) {
+    showLeaderboardButton.style.display = "block"; // Make it visible if hidden
+    showLeaderboardButton.addEventListener("click", fetchLeaderboard);
   }
 }
 
+document.getElementById('showLeaderboardBtn').addEventListener('click', fetchLeaderboard);
+
+// Close leaderboard modal when the close button is clicked
+document.getElementById('closeLeaderboardModal').addEventListener('click', () => {
+  document.getElementById('leaderboardModal').close();
+});
+
+  // Hide the "Buy Premium" button
+ 
+
 function fetchLeaderboard() {
   const token = localStorage.getItem('token');
+  
+  // Check if the token is present
+  if (!token) {
+    alert("You must be logged in to view the leaderboard.");
+    window.location.href = "/login"; // Redirect to login page if no token is found
+    return;
+  }
+
+  // Fetch leaderboard data from the backend
   fetch("http://localhost:3000/premium/showLeaderboard", {
     headers: { "Content-Type": "application/json", Authorization: token },
   })
@@ -96,47 +248,53 @@ function fetchLeaderboard() {
       }
       return response.json();
     })
-    // .then(data => {
-    //   if (!Array.isArray(data)) {
-    //     throw new TypeError('Data is not an array');
-    //   }
-    //   displayLeaderboard(data);
-    // })
     .then(data => {
-      // Since the backend now sends a single object, no need to check for an array
-      displayLeaderboard(data);
+      // If the data is not an array, handle it as an object (single leaderboard entry)
+      if (Array.isArray(data)) {
+        displayLeaderboard(data); // If data is an array, call displayLeaderboard for multiple users
+      } else {
+        displayLeaderboard([data]); // Wrap the data in an array and pass it to displayLeaderboard
+      }
     })
     .catch(error => {
       console.error("Error fetching leaderboard:", error);
+      alert("An error occurred while fetching the leaderboard.");
     });
 }
 
 function displayLeaderboard(data) {
-  // Clear existing leaderboard if any
-  let leaderboardContainer = document.getElementById("leaderboard-container");
-  if (!leaderboardContainer) {
-    leaderboardContainer = document.createElement("div");
-    leaderboardContainer.id = "leaderboard-container";
-    document.body.appendChild(leaderboardContainer);
+  // Check if data is an array or not
+  if (!Array.isArray(data)) {
+    console.error("Leaderboard data is not an array:", data);
+    alert("An error occurred while fetching the leaderboard data.");
+    return;
   }
 
-  leaderboardContainer.innerHTML = '';
+  // Use the existing leaderboard container
+  const leaderboardContainer = document.getElementById("leaderboard-container");
 
+  // Clear the existing leaderboard content
+  leaderboardContainer.innerHTML = "";
+
+  // Create a title for the leaderboard
   const leaderboardTitle = document.createElement("h3");
   leaderboardTitle.textContent = "Leaderboard";
   leaderboardContainer.appendChild(leaderboardTitle);
 
+  // Create a list to display leaderboard entries
   const leaderboardList = document.createElement("ul");
   leaderboardContainer.appendChild(leaderboardList);
 
-  // data.forEach(user => {
-  //   const listItem = document.createElement("li");
-  //   listItem.textContent = `Name: ${user.name}, Total Expense: ${user.totalexpense}`;
-  //   leaderboardList.appendChild(listItem);
-  // });
-  const listItem = document.createElement("li");
-  listItem.textContent = `Name: ${data.name}, Total Expense: ₹${data.totalexpense}`;
-  leaderboardList.appendChild(listItem);
+  // Loop through the data and create a list item for each leaderboard entry
+  data.forEach(user => {
+    const listItem = document.createElement("li");
+    listItem.textContent = `Name: ${user.name}, Total Expense: ₹${user.totalexpense}`;
+    leaderboardList.appendChild(listItem);
+  });
+
+  // Show the leaderboard modal
+  const leaderboardModal = document.getElementById("leaderboardModal");
+  leaderboardModal.showModal();
 }
 
 function parseJwt(token) {
@@ -147,6 +305,7 @@ function parseJwt(token) {
   }).join(''));
   return JSON.parse(jsonPayload);
 } // Load expenses from the backend on page load 
+// Function to handle downloading the latest expense
 function downloadLatestExpense() {
   const token = localStorage.getItem('token');
   axios.get('http://localhost:3000/user/download', { headers: { "Authorization": token } })
@@ -193,7 +352,7 @@ async function downloadHistory() {
   }
 
 }
-
+// Function to display the downloads in a modal
 function displayDownloads(downloads) {
   const modal = document.getElementById('modal');
   modal.innerHTML = ''; // Clear any existing content
@@ -253,36 +412,10 @@ function displayDownloads(downloads) {
 function fetchDownloadedFiles() {
   downloadHistory();  // Reload the download history when called
 }
+//eventListener to handle closing the modal
 
-function loadExpenses(expenses) {
-  const expenseList = document.getElementById("expenseList");
-  expenseList.innerHTML = "";
-  expenses.forEach(expense => {
-    const li = document.createElement("li");
-    li.setAttribute("data-id", expense.id);
-    li.textContent = `${expense.amount} - ${expense.description} - ${expense.category}`;
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", () => deleteExpense(expense.id, li));
-    li.appendChild(deleteButton);
-    expenseList.appendChild(li);
-  });
-}
 
-function fetchExpenses(page, limit) {
-  const token = localStorage.getItem("token");
-  axios.get(`http://localhost:3000/expenses?page=${page}&limit=${limit}`, {
-    headers: { Authorization: token },
-  })
-    .then(response => {
-      const { expenses, pagination } = response.data;
-      loadExpenses(expenses);
-      updatePagination(pagination);
-    })
-    .catch(error => {
-      console.error("Error fetching expenses:", error);
-    });
-}
+
 function updatePagination(pagination) {
   const pageInfo = document.getElementById("pageInfo");
   const prevPage = document.getElementById("prevPage");
@@ -304,80 +437,105 @@ function changePage(direction) {
   currentPage += direction;
   fetchExpenses(currentPage, limit);
 }
+async function initialize() {
+  document.addEventListener("DOMContentLoaded", async () => {
 
-document.addEventListener("DOMContentLoaded", async () => {
- 
-  const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
-  // Get token 
-  if (!token) {
-    alert("You must be logged in to view expenses");
-    window.location.href = "login.html"; return;
-  }
-   // Get `expensesPerPage` from localStorage or set a default value
-   // Get `expensesPerPage` from localStorage or set a default value
-  limit = localStorage.getItem("expensesPerPage") || 10; // Default to 10 if not set
-  currentPage = 1; // Start on the first page
-
-  // Update the dropdown to reflect the current limit
-  document.getElementById("limit").value = limit;
-
-  // Fetch and display expenses for the current page and limit
-  fetchExpenses(currentPage, limit);
-
-  // Add event listeners for pagination
-  document.getElementById("prevPage").addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      fetchExpenses(currentPage, limit);
+    // Get token 
+    if (!token) {
+      alert("You must be logged in to view expenses");
+      window.location.href = "login.html"; return;
     }
-  });
-  document.getElementById("nextPage").addEventListener("click", () => {
-    currentPage++;
+
+    // Get `expensesPerPage` from localStorage or set a default value
+    limit = localStorage.getItem("expensesPerPage") || 10; // Default to 10 if not set
+    currentPage = 1; // Start on the first page
+
+    // Update the dropdown to reflect the current limit
+    document.getElementById("limit").value = limit;
+
+    // Fetch and display expenses for the current page and limit
     fetchExpenses(currentPage, limit);
-  });
 
-  // Update limit when the dropdown changes
-  document.getElementById("limit").addEventListener("change", updateLimit);
+    // Add event listeners for pagination
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        fetchExpenses(currentPage, limit);
+      }
+    });
 
-  try {
-    const response = await axios.get('http://localhost:3000/user/data',
-      {
-        headers: { "Content-Type": "application/json", Authorization: token }
-      })
-    if (response.data.isPremium) {
+    document.getElementById("nextPage").addEventListener("click", () => {
+      currentPage++;
+      fetchExpenses(currentPage, limit);
+    });
+
+    // Update limit when the dropdown changes
+    document.getElementById("limit").addEventListener("change", updateLimit);
+
+    // Add event listener for leaderboard button click
+    const leaderboardBtn = document.getElementById("showLeaderboardBtn");
+    const leaderboardModal = document.getElementById("leaderboardModal");
+    const closeLeaderboardModal = document.getElementById("closeLeaderboardModal");
+
+    leaderboardBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("You must be logged in to view the leaderboard.");
+        window.location.href = "login.html"; // Redirect to login page if no token is found
+        return;
+      }
+
+      try {
+        const response = await axios.get('http://localhost:3000/premium/showLeaderboard', {
+          headers: { "Content-Type": "application/json", Authorization: token }
+        });
+
+        const leaderboardData = response.data; // Assuming response is an array of leaderboard entries
+
+        console.log("Leaderboard data:", leaderboardData);
+
+        // Check if the response is an array and display it
+        if (Array.isArray(leaderboardData)) {
+          displayLeaderboard(leaderboardData); // Pass the fetched data to the displayLeaderboard function
+        } // Show the modal
+      } catch (err) {
+        console.error("Error fetching leaderboard:", err);
+        alert("An error occurred while fetching the leaderboard.");
+      }
+    });
+
+    // Event listener to close the leaderboard modal
+    closeLeaderboardModal.addEventListener("click", () => {
+      leaderboardModal.close(); // Close the modal
+    });
+
+    try {
+      const response = await axios.get('http://localhost:3000/user/data',
+        {
+          headers: { "Content-Type": "application/json", Authorization: token }
+        })
+      if (response.data.isPremium) {
+        showPremiumuserMessage();
+      }
+    }
+    catch (err) {
+      console.log("Error fetching data", err)
+    }
+
+    const decodeToken = parseJwt(token);
+    const isAdmin = decodeToken.ispremiumuser;
+
+    if (isAdmin) {
       showPremiumuserMessage();
     }
-  }
-  catch (err) {
-    console.log("Error fetching data", err)
-  }
 
-  const decodeToken = parseJwt(token);
-  // console.log(decodeToken);
-  const isAdmin = decodeToken.ispremiumuser;
-  // const isPremium = localStorage.getItem('isPremium') === 'true';
+  });
+}
 
-  if (isAdmin) {
-    showPremiumuserMessage();
+initialize();
 
-  }
-
-  // fetch("http://localhost:3000/expenses", {
-  //   headers: { "Content-Type": "application/json", Authorization: token },
-  // })
-  //   .then((response) => {
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch expenses');
-  //     }
-  //     return response.json();
-  //   }).then(data => {
-  //     // console.log(data.expenses);
-  //     // Handle your expenses
-  //     data.expenses.forEach(expense => displayExpense(expense));
-  //   })
-  //   .catch((error) => { console.error('Error loading expenses:', error); });
-});
 document.getElementById('rzp-button').onclick = async function (e) {
   e.preventDefault();
 

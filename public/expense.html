@@ -7,133 +7,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expense Tracker</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    form {
-      margin-bottom: 20px;
-    }
-
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-
-    li {
-      margin-bottom: 10px;
-      padding: 10px;
-      background: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-
-    button {
-      margin-left: 10px;
-    }
-
-    .premium-controls {
-      display: none;
-      /* Initially hidden, show only for premium users */
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .download-btn {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .download-btn button {
-      padding: 10px 20px;
-      border: none;
-      background-color: #007bff;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-
-    .pagination button {
-      padding: 10px 20px;
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    .pagination button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+   
   </style>
+   <link rel="stylesheet" href="/css/home.css">
 </head>
 
 <body>
-  <h1>Expense Tracker</h1>
-  <form onsubmit="handleFormSubmit(event)">
-    <label for="amount">Expense Amount:</label>
-    <input type="number" name="amount" id="amount" required />
-    <br /><br />
-    <label for="description">Description:</label>
-    <input type="text" name="description" id="description" required />
-    <br /><br />
-    <label for="category">Category:</label>
-    <!-- <input type="text" name="category" id="category" required /> -->
-    <select name="category" id="category" required>
-      <option value="food">Food</option>
-      <option value="fuel">Fuel</option>
-      <option value="salary">Salary</option>
-    </select>
-    <br /><br />
-    <button type="submit">Add Expense</button>
-  </form>
-  <div class="limit-selector">
-    <label for="limit">Expenses per page:</label>
-    <select id="limit" onchange="updateLimit()">
-      <option value="5">5</option>
-      <option value="10" selected>10</option>
-      <option value="20">20</option>
-      <option value="30">30</option>
-      <option value="40">40</option>
-    </select>
+  <div id="premiumButton">
+  <button id="rzp-button">Buy Premium Membership</button>
+</div>
+
+
+  <div class="container">
+    <div class="btn-logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <h3 id="welcome">Welcome</h3>
+
+    <div id="modal-board"></div>
+    <div id="modal-table"></div>
+
+    <form onsubmit="handleFormSubmit(event)" class="form-controller" id="expenseForm">
+      <div class="inputs">
+        <div class="input-controller">
+          <label for="amount">Expense Amount:</label>
+          <input type="number" id="amount" name="amount" min="1" required />
+        </div>    
+        <div class="input-controller">
+          <label for="category">Category:</label>
+          <select id="category" name="category" required>
+            <option value="food">Food</option>
+            <option value="fuel">Fuel</option>
+            <option value="salary">Salary</option>
+            <option value="Groceries">Groceries</option>
+            <option value="Transportation">Transportation</option>
+          </select>
+          
+        </div>
+        <div class="input-controller">
+          <label for="description">Description:</label>
+          <textarea id="description" name="description" rows="4"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-submit">Add Expense</button>
+      
+      
+     
+    </form>
+   
+
+    <div class="limit-selector">
+      <label for="limit">Expenses per page:</label>
+      <select id="limit" onchange="updateLimit()">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="40">40</option>
+      </select>
+    </div>
+
+    <h2>Expenses</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="expensesTableBody">
+        <!-- Dynamically generated expenses will be inserted here -->
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      <button id="prevPage" onclick="changePage(-1)" >Previous</button>
+      <span id="pageInfo"></span>
+      <button id="nextPage" onclick="changePage(1)">Next</button>
+    </div>
+
+    <div class="download-btn">
+      <button onclick="downloadHistory()" id="downloadexpense">Download File</button>
+    </div>
+
+    
+    <ul id="downloadedList"></ul>
   </div>
-  <h2>Filter By</h2> <select id="filter">
-    <option value="all">All</option>
-    <option value="daily">Daily</option>
-    <option value="weekly">Weekly</option>
-    <option value="monthly">Monthly</option>
-  </select>
-  <h2>Expenses</h2>
-  <ul id="expenseList"></ul>
-  <div id="message"></div>
-  <button id="rzp-button">Buy Premium</button>
 
-  <div class="download-btn">
-    <button onclick="downloadHistory()" id="downloadexpense">Download File</button>
-  </div>
-  <div class="pagination">
-    <button id="prevPage" onclick="changePage(-1)" disabled>Previous</button>
-    <span id="pageInfo"></span>
-    <button id="nextPage" onclick="changePage(1)" disabled>Next</button>
-  </div>
-
-
-  <h2>Previous Downloads</h2>
-  <ul id="downloadedList"></ul>
-
-  <!-- <button class="button open-button">open modal</button> -->
   <dialog class="modal" id="modal">
+    <!-- Modal content goes here -->
+  </dialog>
+  <div class="container">
+    <!-- Add a button to show the leaderboard -->
+    <button id="showLeaderboardBtn">Show Leaderboard</button>
+  
+    <!-- Modal to display the leaderboard -->
+    <dialog class="leaderboard-modal" id="leaderboardModal">
+      <div class="modal-content">
+        <span class="close-button" id="closeLeaderboardModal">&times;</span>
+        <div id="leaderboard-container"></div>
+      </div>
+    </dialog>
+  </div>
+  
+
+  
     <!-- <dialog id="downoadListModel">dowmloadList</dialog> -->
     <!-- <button class="button close-button">close modal</button> -->
-  </dialog>
+  
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>

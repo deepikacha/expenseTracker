@@ -10,9 +10,14 @@ const AWSService=require('../services/S3services')
 
 // Add a new expense
 exports.addExpense = async (req, res) => {
+  
   const { amount, description, category } = req.body;
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized: Please login" });
+  }
   const userId = req.user.id;
   const transaction = await sequelize.transaction(); 
+  
 
   if (!amount || !description || !category) {
     return res.status(400).json({ error: "All fields are required." });

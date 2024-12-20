@@ -29,6 +29,10 @@ app.use(authRoutes);
 app.use(expenseRoutes);
 app.use('/purchase', purchaseRoutes);
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'expense.html'));
+});
+
 app.get('/signup', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });

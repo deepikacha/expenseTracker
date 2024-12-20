@@ -1,0 +1,356 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f1f1f1;
+}
+
+.container {
+    max-width: 600px;
+    min-height: 100vh;
+    margin: auto;
+    padding: 50px 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#welcome {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#welcome, #premiumButton, .btn-logout, .form-controller, .pagination, .table {
+    margin-bottom: 20px;
+}
+
+#premiumButton {
+    display: flex;
+    justify-content: center;
+}
+
+#premiumButton button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(43deg, #4158d0 0%, #c850c0 46%, #ffcc70 100%);
+}
+
+.download-btn {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.download-btn button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-logout {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-logout button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background: #ffaf37;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+.inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-controller {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-controller:first-child,
+.input-controller:nth-child(2) {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
+
+.input-controller label {
+    font-weight: bold;
+}
+
+.input-controller input,
+.input-controller textarea,
+.input-controller select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.btn-submit {
+    padding: 10px;
+    font-size: 1rem;
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-submit:hover {
+    background: #45a049;
+}
+
+/* Table styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #516be9;
+    color: #fff;
+}
+
+/* Pagination styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    background: #516be9;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Modal styles */
+#modal {
+   border:1px solid #000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 600px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    z-index: 1001;
+}
+    /*
+
+#modal[open] {
+    display: block;
+}
+
+#modal::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+#modal h4 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #516be9;
+} */
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+/* Responsive design */
+@media screen and (min-width: 768px) {
+    .inputs {
+        flex-wrap: nowrap;
+    }
+
+    .input-controller:first-child,
+    .input-controller:nth-child(2) {
+        display: flex;
+        gap: 15px;
+    }
+}
+
+body.premium-user {
+    background: linear-gradient(to top, #ffffff, #0000ff);
+}
+
+/* dialog {
+    
+    border: 1px solid black;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    margin: auto;
+    background-color: white;
+
+} */
+
+/* Additional Styling */
+/* .modal-empty-message {
+    text-align: center;
+    color: #666;
+    font-size: 1.1rem;
+    margin-top: 20px;
+} */
+
+/* Button Styles */
+.button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+/* Modal Transition Effects */
+/* #modal {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#modal[open] {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#modal:not([open]) {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+} */
+
+/* Responsive Modal */
+/* @media screen and (max-width: 600px) {
+    #modal {
+        width: 90%;
+    }
+
+    #modal table {
+        font-size: 0.9rem;
+    }
+} */
+
+/* #modal a {
+    color: #007bff; /* Ensure it's a bright color for visibility */
+    /* text-decoration: none;
+  }
+  
+ /* Leaderboard modal styling */
+ 
+.leaderboard-modal {
+    width: 80%;
+    max-width: 500px;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    background-color: #fff;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+     /* Hidden by default */
+  }
+  
+  .leaderboard-modal::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .modal-content {
+    position: relative;
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    color: #333;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+  }
+  
+  .leaderboard-container {
+    margin-top: 20px;
+  }
+  
+  .leaderboard-container h3 {
+    text-align: center;
+    color: #444;
+  }
+  
+  .leaderboard-container ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .leaderboard-container li {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  

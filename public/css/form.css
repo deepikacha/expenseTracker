@@ -1,0 +1,73 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  body {
+    background: #cfcfcf;
+  }
+  .containers {
+    background: #fff;
+    height: 100vh;
+    margin: 0 20vw;
+    padding: 30px;
+  }
+  .containers .title {
+    padding: 20px 0 30px;
+    font-size: 2em;
+    text-align: center;
+  }
+  .containers .form-controller {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 5vw;
+    padding: 20px;
+  }
+  .containers .form-controller .input-controller {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-bottom: 20px;
+  }
+  .containers .form-controller .input-controller label {
+    font-size: 1.2em;
+  }
+  .containers .form-controller .input-controller input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .containers .form-controller .input-controller input:focus {
+    outline: 2px solid rgb(140, 181, 252);
+  }
+  .containers .btn {
+    padding: 10px;
+    font-size: 1.2em;
+  }
+  .containers .btn-submit {
+    background: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+  }
+  .containers .btn-submit:hover {
+    background: #45a049;
+  }
+  .centered {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .centered a {
+    text-decoration: none;
+    color: #3e4ad3;
+  }
+  @media screen and (min-width: 768px) {
+    .containers {
+      margin: 0 20vw;
+    }
+  }
+  
