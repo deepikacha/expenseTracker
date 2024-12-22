@@ -30,7 +30,8 @@ exports.addExpense = async (req, res) => {
       amount,
       description,
       category,
-      userId
+      userId,
+      
     }, { transaction: transaction });
 
     // Update the user's total expense
@@ -39,7 +40,13 @@ exports.addExpense = async (req, res) => {
     await user.save({ transaction: transaction});
 
     await transaction.commit(); // Commit the transaction
-    return res.status(201).json(newExpense);
+    return res.status(201).json({
+      id: newExpense.id,
+      amount: newExpense.amount,
+      description: newExpense.description,
+      category: newExpense.category,
+      date: newExpense.createdAt, // Explicitly map createdAt to date
+    });
   } catch (error) {
     await transaction.rollback(); // Rollback the transaction if any error occurs
     console.error('Error adding expense:', error.message);
