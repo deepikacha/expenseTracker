@@ -36,7 +36,7 @@ function handleFormSubmit(event) {
   }
   const expense = { amount, description, category,date: new Date().toLocaleDateString() };
   // Send POST request to add expense to backend
-  fetch("http://localhost:3000/expenses", {
+  fetch("http://65.0.7.163/expenses", {
     headers: {
       "Content-Type": "application/json", Authorization: token
     }, method: "POST", body: JSON.stringify(expense),
@@ -156,7 +156,7 @@ function fetchExpenses(page, limit) {
     window.location.href = "/login"; // Redirect to login if no token is found
     return;
   }
-  axios.get(`http://localhost:3000/expenses?page=${page}&limit=${limit}`, {
+  axios.get(`http://65.0.7.163/expenses?page=${page}&limit=${limit}`, {
     headers: { Authorization: token },
   })
     .then(response => {
@@ -174,7 +174,7 @@ function deleteExpense(expenseId, row) {
   const token = localStorage.getItem("token");
 
   if (token) {
-    fetch(`http://localhost:3000/expenses/${expenseId}`, {
+    fetch(`http://65.0.7.163/expenses/${expenseId}`, {
       method: "DELETE",
       headers: { Authorization: token }
     })
@@ -229,7 +229,7 @@ function fetchLeaderboard() {
   }
 
   // Fetch leaderboard data from the backend
-  fetch("http://localhost:3000/premium/showLeaderboard", {
+  fetch("http://65.0.7.163/premium/showLeaderboard", {
     headers: { "Content-Type": "application/json", Authorization: token },
   })
     .then(response => {
@@ -298,7 +298,7 @@ function parseJwt(token) {
 // Function to handle downloading the latest expense
 function downloadLatestExpense() {
   const token = localStorage.getItem('token');
-  axios.get('http://localhost:3000/user/download', { headers: { "Authorization": token } })
+  axios.get('http://65.0.7.163/user/download', { headers: { "Authorization": token } })
     .then(response => {
       if (response.status === 200) {
         var a = document.createElement("a");
@@ -325,7 +325,7 @@ async function downloadHistory() {
 
   try {
 
-    await axios.get('http://localhost:3000/download-history',
+    await axios.get('http://65.0.7.163/download-history',
       { headers: { "Content-Type": "application/json", Authorization: token } })
       .then(response => {
         if (response.status === 401) {
@@ -478,7 +478,7 @@ async function initialize() {
       }
 
       try {
-        const response = await axios.get('http://localhost:3000/premium/showLeaderboard', {
+        const response = await axios.get('http://65.0.7.163/premium/showLeaderboard', {
           headers: { "Content-Type": "application/json", Authorization: token }
         });
 
@@ -502,7 +502,7 @@ async function initialize() {
     });
 
     try {
-      const response = await axios.get('http://localhost:3000/user/data',
+      const response = await axios.get('http://65.0.7.163/user/data',
         {
           headers: { "Content-Type": "application/json", Authorization: token }
         })
@@ -531,7 +531,7 @@ document.getElementById('rzp-button').onclick = async function (e) {
 
   const token = localStorage.getItem('token');
   try {
-    const response = await axios.get('http://localhost:3000/purchase/premiummembership', {
+    const response = await axios.get('http://65.0.7.163/purchase/premiummembership', {
       headers: { Authorization: token }
     });
 
@@ -541,7 +541,7 @@ document.getElementById('rzp-button').onclick = async function (e) {
       handler: async function (response) {
         try {
           // Send transaction success details to the backend
-          await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
+          await axios.post('http://65.0.7.163/purchase/updatetransactionstatus', {
             orderid: options.order_id, // corrected to 'orderid'
             paymentid: response.razorpay_payment_id, // corrected to 'paymentid'
             status: "SUCCESS",
@@ -569,7 +569,7 @@ document.getElementById('rzp-button').onclick = async function (e) {
         }
 
         // Notify backend of failed transaction 
-        await axios.post("http://localhost:3000/purchase/updatetransactionstatus", {
+        await axios.post("http://65.0.7.163/purchase/updatetransactionstatus", {
           orderid: options.order_id, // corrected to 'orderid'
           status: "FAILED",
         }, {
