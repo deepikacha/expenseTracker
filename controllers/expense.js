@@ -19,7 +19,7 @@ exports.addExpense = async (req, res) => {
   const transaction = await sequelize.transaction(); 
   
 
-  if (!amount || !description || !category) {
+  if (!amount || !description || !category) {   
     return res.status(400).json({ error: "All fields are required." });
   }
 

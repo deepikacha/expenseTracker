@@ -195,35 +195,25 @@ function deleteExpense(expenseId, row) {
 }
 
 function showPremiumuserMessage() {
-  const addExpenseButton = document.querySelector('button[type="submit"]');
-  const container = addExpenseButton.parentNode;
-
-  // Update or create the premium message
-  const buyPremiumButton = document.getElementById('rzp-button'); // "Buy Premium" button
+  const buyPremiumButton = document.getElementById('rzp-button');
   if (buyPremiumButton) {
-    // Update the button text and disable it
     buyPremiumButton.textContent = "You are a premium user now";
     buyPremiumButton.disabled = true;
 
-    // Apply the reversed gradient to the body background
+    // Apply premium user styling
     document.body.style.background = "linear-gradient(43deg, #ffcc70 0%, #c850c0 46%, #4158d0 100%)";
-    document.body.style.backgroundAttachment = "fixed"; // Optional for a smoother experience
-  }
+    document.body.style.backgroundAttachment = "fixed";
 
-  // Check if the leaderboard button already exists to prevent duplication
-  const showLeaderboardButton = document.getElementById("showLeaderboardBtn");
-  if (showLeaderboardButton) {
-    showLeaderboardButton.style.display = "block"; // Make it visible if hidden
-    showLeaderboardButton.addEventListener("click", fetchLeaderboard);
+    // Show the leaderboard and download buttons
+    const leaderboardButton = document.getElementById('showLeaderboardBtn');
+    const downloadButton = document.getElementById('downloadexpense');
+    leaderboardButton.style.display = 'block';
+    downloadButton.style.display = 'block';
+
+    // Add event listeners if needed
+    leaderboardButton.addEventListener('click', fetchLeaderboard);
   }
 }
-
-document.getElementById('showLeaderboardBtn').addEventListener('click', fetchLeaderboard);
-
-// Close leaderboard modal when the close button is clicked
-document.getElementById('closeLeaderboardModal').addEventListener('click', () => {
-  document.getElementById('leaderboardModal').close();
-});
 
   // Hide the "Buy Premium" button
  
