@@ -14,4 +14,5 @@ const Order=sequelize.define('order',{
         defaultValue:'pending'
     }
 })
+//
 module.exports=Order;
