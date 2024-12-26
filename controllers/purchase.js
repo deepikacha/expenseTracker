@@ -47,8 +47,7 @@ const updateTransactionStatus = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: User not logged in" });
     }
 
-    console.log("Received data - paymentid:", paymentid, "orderid:", orderid, "status:", status);
-
+  
     if (!orderid || !paymentid) {
       console.error("Order ID or Payment ID is missing");
       return res.status(400).json({ message: "Order ID or Payment ID is missing" });
