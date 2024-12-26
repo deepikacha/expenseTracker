@@ -1,5 +1,5 @@
  const endPoint='65.0.7.163';
-// const endPoint = 'localhost:3000';
+//  const endPoint = 'localhost:3000';
 
 function loginApi(loginData) {
     const messageContainer = document.getElementById('message');

@@ -176,8 +176,8 @@ catch(error){
 exports.showLeaderboard = async (req, res) => {
   try {
     const userId = req.user.id;
-    const leaderboard = await User.findOne({
-      where: { id: userId },
+    const leaderboard = await User.findAll({
+     
       attributes: [
         'name',
         [Sequelize.fn('SUM', Sequelize.col('expenses.amount')), 'totalexpense']
@@ -193,14 +193,14 @@ exports.showLeaderboard = async (req, res) => {
     });
 
     // Ensure the result is in JSON format
-    // const leaderboardData = leaderboard.map(user => ({
-    //   name: user.name,
-    //   totalexpense: user.dataValues.totalexpense
-    // }));
-    const leaderboardData = {
-      name: leaderboard.name,
-      totalexpense: leaderboard.dataValues.totalexpense,
-    };
+    const leaderboardData = leaderboard.map(user => ({
+      name: user.name,
+      totalexpense: user.dataValues.totalexpense
+    }));
+    // const leaderboardData = {
+    //   name: leaderboard.name,
+    //   totalexpense: leaderboard.dataValues.totalexpense,
+    // };
 
     res.status(200).json(leaderboardData);
   } catch (error) {
