@@ -1,18 +1,15 @@
-
-
-// const Razorpay = require("razorpay");
+console.log(document)
 const logoutButton = document.querySelector(".btn-logout button");  // Select the button inside the div
 
 logoutButton.addEventListener("click", () => {
-  // Clear all data from local storage
+
   localStorage.clear();
-  
-  // Redirect to the login page
+
   window.location.href = "/login";
 });
 
 
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
   const amount = event.target.amount.value;
   const description = event.target.description.value;
@@ -22,56 +19,18 @@ function handleFormSubmit(event) {
   if (!amount || !description || !category) {
     alert("Please fill in all fields"); return;
   }
-  const token = localStorage.getItem('token');
-  console.log(token)
-  // Get the token
-  if (!token) {
-    // Check if token exists
-    const userResponse = confirm("You must be logged in to add an expense. Do you want to log in?");
-    if (userResponse) {
-      // Redirect to login page if user clicks 'OK'
-      window.location.href = '/login';
-    }
-    return;
-  }
-  const expense = { amount, description, category,date: new Date().toLocaleDateString() };
-  // Send POST request to add expense to backend
-  fetch("http://65.0.7.163/expenses", {
-    headers: {
-      "Content-Type": "application/json", Authorization: token
-    }, method: "POST", body: JSON.stringify(expense),
-  })
-  .then((response) => {
-    if (response.status === 401) {
-      alert('Please login');
-      window.location.href = '/login'; // Redirect to login page
-      return; // Prevent further code execution
-    } else if (response.ok) {
-      alert('Expense added successfully');
-      return response.json(); // Parse the response JSON
-    } else{
-      return response.json().then(data => {
-        alert(data.message || 'An error occurred');
 
-      });
-      }
-    
-  })
-    .then((savedExpense) => {
-      // Display saved expense in the list
-      if (savedExpense) {
-        // Display saved expense in the list
-        displayExpense(savedExpense);
-        // Reset form
-        event.target.reset();
-      }
-    })
-    .catch((error) => {
-      console.error("Error saving expense:", error);
-    });
+  const expense = { amount, description, category, date };
+  const savedExpenses = await addExpensesApi(expense);
+
+  if (savedExpenses) {
+    // Display saved expense in the lis
+    displayExpense(savedExpenses);
+    // Reset form
+    event.target.reset();
+  }
 }
 
-// Function to display an expense 
 // Function to display an expense in the table
 function displayExpense(expense) {
   const expensesTableBody = document.getElementById("expensesTableBody");
@@ -149,49 +108,28 @@ function loadExpenses(expenses) {
   });
 }
 
-function fetchExpenses(page, limit) {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    alert("Please log in to view expenses.");
-    window.location.href = "/login"; // Redirect to login if no token is found
-    return;
-  }
-  axios.get(`http://65.0.7.163/expenses?page=${page}&limit=${limit}`, {
-    headers: { Authorization: token },
-  })
-    .then(response => {
-      const { expenses, pagination } = response.data;
-      loadExpenses(expenses);
-      updatePagination(pagination);
-    })
-    .catch(error => {
-      console.error("Error fetching expenses:", error);
-    });
+async function fetchExpenses(page, limit) {
+  const response = await getExpensesApi(page, limit)
+
+  const { expenses, pagination } = response.data;
+  loadExpenses(expenses);
+  updatePagination(pagination);
+
+
 }
 
 // Function to delete an expense from the UI and backend
-function deleteExpense(expenseId, row) {
-  const token = localStorage.getItem("token");
+async function deleteExpense(expenseId, row) {
+  const data = await deleteExpensesApi(expenseId)
 
-  if (token) {
-    fetch(`http://65.0.7.163/expenses/${expenseId}`, {
-      method: "DELETE",
-      headers: { Authorization: token }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          row.remove(); // Remove the row from the table
-        } else {
-          alert("Failed to delete expense");
-        }
-      })
-      .catch((error) => {
-        console.error("Error deleting expense:", error);
-      });
+  if (data.success) {
+    row.remove(); // Remove the row from the table
   } else {
-    alert("Please log in to delete expenses.");
+    alert("Failed to delete expense");
   }
+
+
+
 }
 
 function showPremiumuserMessage() {
@@ -215,41 +153,19 @@ function showPremiumuserMessage() {
   }
 }
 
-  // Hide the "Buy Premium" button
- 
+// Hide the "Buy Premium" button
 
-function fetchLeaderboard() {
-  const token = localStorage.getItem('token');
-  
-  // Check if the token is present
-  if (!token) {
-    alert("You must be logged in to view the leaderboard.");
-    window.location.href = "/login"; // Redirect to login page if no token is found
-    return;
+
+async function fetchLeaderboard() {
+  const data = await fetchLeaderBoardApi()
+  // If the data is not an array, handle it as an object (single leaderboard entry)
+  if (Array.isArray(data)) {
+    displayLeaderboard(data); // If data is an array, call displayLeaderboard for multiple users
+  } else {
+    displayLeaderboard([data]); // Wrap the data in an array and pass it to displayLeaderboard
   }
 
-  // Fetch leaderboard data from the backend
-  fetch("http://65.0.7.163/premium/showLeaderboard", {
-    headers: { "Content-Type": "application/json", Authorization: token },
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch leaderboard');
-      }
-      return response.json();
-    })
-    .then(data => {
-      // If the data is not an array, handle it as an object (single leaderboard entry)
-      if (Array.isArray(data)) {
-        displayLeaderboard(data); // If data is an array, call displayLeaderboard for multiple users
-      } else {
-        displayLeaderboard([data]); // Wrap the data in an array and pass it to displayLeaderboard
-      }
-    })
-    .catch(error => {
-      console.error("Error fetching leaderboard:", error);
-      alert("An error occurred while fetching the leaderboard.");
-    });
+
 }
 
 function displayLeaderboard(data) {
@@ -287,60 +203,25 @@ function displayLeaderboard(data) {
   leaderboardModal.showModal();
 }
 
-function parseJwt(token) {
-  var base64Url = token.split('.')[1];
-  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
-  return JSON.parse(jsonPayload);
-} // Load expenses from the backend on page load 
-// Function to handle downloading the latest expense
-function downloadLatestExpense() {
-  const token = localStorage.getItem('token');
-  axios.get('http://65.0.7.163/user/download', { headers: { "Authorization": token } })
-    .then(response => {
-      if (response.status === 200) {
-        var a = document.createElement("a");
-        a.href = response.data.fileURL;
-        a.download = 'myexpense.csv';
-        a.click();
-        fetchDownloadedFiles();
 
+async function downloadLatestExpense() {
+  const fileURL = await downloadLatestExpenseApi()
 
-      }
-      else {
-        throw new Error(response.data.message)
-      }
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+  let a = document.createElement("a");
+  a.href = fileURL;
+  a.download = 'myexpense.csv';
+  a.click();
+  fetchDownloadedFiles();
+
 }
 
 
 
 async function downloadHistory() {
-  const token = localStorage.getItem('token');
+ 
+   const downloaded= await downloadHistoryApi()
 
-  try {
-
-    await axios.get('http://65.0.7.163/download-history',
-      { headers: { "Content-Type": "application/json", Authorization: token } })
-      .then(response => {
-        if (response.status === 401) {
-          alert(response.data.message)
-          return
-        }
-        displayDownloads(response.data.downloaded)
-        // console.log(response.data)
-      })
-
-  }
-  catch (err) {
-    console.log(err)
-  }
-
+    displayDownloads(downloaded)
 }
 // Function to display the downloads in a modal
 function displayDownloads(downloads) {
@@ -470,30 +351,13 @@ async function initialize() {
     const closeLeaderboardModal = document.getElementById("closeLeaderboardModal");
 
     leaderboardBtn.addEventListener("click", async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert("You must be logged in to view the leaderboard.");
-        window.location.href = "login.html"; // Redirect to login page if no token is found
-        return;
-      }
-
-      try {
-        const response = await axios.get('http://65.0.7.163/premium/showLeaderboard', {
-          headers: { "Content-Type": "application/json", Authorization: token }
-        });
-
-        const leaderboardData = response.data; // Assuming response is an array of leaderboard entries
-
-        console.log("Leaderboard data:", leaderboardData);
-
+    const leaderboardData=await getLeaderBoardApi();
+    
         // Check if the response is an array and display it
         if (Array.isArray(leaderboardData)) {
           displayLeaderboard(leaderboardData); // Pass the fetched data to the displayLeaderboard function
         } // Show the modal
-      } catch (err) {
-        console.error("Error fetching leaderboard:", err);
-        alert("An error occurred while fetching the leaderboard.");
-      }
+      
     });
 
     // Event listener to close the leaderboard modal
@@ -501,26 +365,8 @@ async function initialize() {
       leaderboardModal.close(); // Close the modal
     });
 
-    try {
-      const response = await axios.get('http://65.0.7.163/user/data',
-        {
-          headers: { "Content-Type": "application/json", Authorization: token }
-        })
-      if (response.data.isPremium) {
-        showPremiumuserMessage();
-      }
-    }
-    catch (err) {
-      console.log("Error fetching data", err)
-    }
-
-    const decodeToken = parseJwt(token);
-    const isAdmin = decodeToken.ispremiumuser;
-
-    if (isAdmin) {
-      showPremiumuserMessage();
-    }
-
+    await isPremiumApi() &&  showPremiumuserMessage()
+  
   });
 }
 
@@ -529,32 +375,18 @@ initialize();
 document.getElementById('rzp-button').onclick = async function (e) {
   e.preventDefault();
 
-  const token = localStorage.getItem('token');
   try {
-    const response = await axios.get('http://65.0.7.163/purchase/premiummembership', {
-      headers: { Authorization: token }
-    });
+    const response=await createOrder();
 
     const options = {
       key: response.data.key_id, // Razorpay API Key
       order_id: response.data.order.id, // Order ID from Razorpay
       handler: async function (response) {
-        try {
-          // Send transaction success details to the backend
-          await axios.post('http://65.0.7.163/purchase/updatetransactionstatus', {
-            orderid: options.order_id, // corrected to 'orderid'
-            paymentid: response.razorpay_payment_id, // corrected to 'paymentid'
-            status: "SUCCESS",
-          }, {
-            headers: { Authorization: token },
-          });
-
+        await updateStateApi( options.order_id,'SUCCESS',response.razorpay_payment_id)
+       
           alert("You are a premium user now!");
           showPremiumuserMessage();
-        } catch (error) {
-          console.error("Error updating transaction to SUCCESS:", error);
-          alert("Failed to update the transaction. Please contact support.");
-        }
+        
       },
     };
 
@@ -562,25 +394,13 @@ document.getElementById('rzp-button').onclick = async function (e) {
 
     // Add payment failure handler
     rzp1.on("payment.failed", async function (response) {
-      try {
-        if (!options.order_id) {
-          console.error("Order ID missing in Razorpay options");
-          return;
-        }
-
-        // Notify backend of failed transaction 
-        await axios.post("http://65.0.7.163/purchase/updatetransactionstatus", {
-          orderid: options.order_id, // corrected to 'orderid'
-          status: "FAILED",
-        }, {
-          headers: { Authorization: token },
-        });
-
-        alert("Payment failed. Order status updated to FAILED.");
-      } catch (error) {
-        console.error("Error updating transaction to FAILED:", error);
-        alert("Failed to update the transaction status.");
+      if (!options.order_id) {
+        console.error("Order ID missing in Razorpay options");
+        return;
       }
+      await updateStateApi( options.order_id,'FAILED')
+      alert("Payment failed. Order status updated to FAILED.");
+      
     });
 
     rzp1.open();

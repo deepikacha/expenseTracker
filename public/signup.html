@@ -8,22 +8,27 @@
 </head>
 <body>
     <div class="containers">
-    <form id="register-form" class="form-controller">
-        <h2 class="title"> Signup</h2>
-        <div class="input-controller">
-        <label for="name">Enter your name:</label>
-        <input type="text" id="name" placeholder="Name" required>
-        <label for="email">Enter your email:</label>
-        <input type="email" id="email" placeholder="Email" required>
-        <label for="password">Enter your password:</label>
-        <input type="password" id="password" placeholder="Password" required>
-        </div>
-       
-        <button type="submit" class="btn btn-submit">Sign Up</button>
-        
-    </form>
+        <form id="register-form" class="form-controller">
+            <h2 class="title">Signup</h2>
+            <div class="input-controller">
+                <label for="name">Enter your name:</label>
+                <input type="text" id="name" placeholder="Name" required>
+                <label for="email">Enter your email:</label>
+                <input type="email" id="email" placeholder="Email" required>
+                <label for="password">Enter your password:</label>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+           
+            <button type="submit" class="btn btn-submit">Sign Up</button>
+        </form>
     </div>
-    <script>
+    
+    <!-- Place the script tags here, at the end of the body -->
+    <script  src="api.js"></script>
+
+    <script >
+       
+
         document.getElementById('register-form').addEventListener('submit', (e) => {
             e.preventDefault();
         
@@ -48,29 +53,10 @@
         
             const userData = { name, email, password };
             
-            console.log(userData)
-           
             // Make the POST request to the backend
-            fetch('http://65.0.7.163/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData),
-            })
-            .then(response => response.json())  // Parse JSON response here
-            .then(data => {
-                console.log(data)
-                if (data.token) {
-                    localStorage.setItem('token', data.token);
-                    window.location.href = 'login.html';
-                }
-              
-            })
-            .catch(error => {
-                alert(error.message);
-                console.error('Error registering user:', error);
-            });
+            signupApi(userData);
         });
-        
     </script>
 </body>
 </html>
+d:\project\New folder\public\api.js
