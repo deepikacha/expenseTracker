@@ -12,11 +12,13 @@ const purchasepremium = async (req, res) => {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+    console.log(rzp);
 
     const amount = 200 * 100; // Amount in paise
     const receipt = `${req.user.id}_${Date.now()}`; // Unique receipt ID
 
     const order = await rzp.orders.create({ amount, currency: "INR", receipt });
+    console.log(order);
     if (!order || !order.status) {
       console.error("Invalid Razorpay order response:", order);
       return res.status(500).json({ message: "Razorpay order creation failed" });
@@ -27,8 +29,9 @@ const purchasepremium = async (req, res) => {
       userId: req.user.id,
       status: "PENDING",
     });
-
-    return res.status(201).json({
+     console.log(order);
+     console.log(process.env.RAZORPAY_KEY_ID)
+     res.status(201).json({
       order,
       key_id: process.env.RAZORPAY_KEY_ID,
     });

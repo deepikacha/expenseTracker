@@ -377,7 +377,7 @@ document.getElementById('rzp-button').onclick = async function (e) {
 
   try {
     const response=await createOrder();
-
+console.log(response);
     const options = {
       key: response.data.key_id, // Razorpay API Key
       order_id: response.data.order.id, // Order ID from Razorpay
